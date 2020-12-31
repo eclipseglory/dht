@@ -175,7 +175,7 @@ class DHT {
     var infoHashStr = String.fromCharCodes(infoHash);
     _resourceTable[infoHashStr] ??= Queue<PeerValue>();
     var peers = _resourceTable[infoHashStr];
-    var peer;
+    PeerValue peer;
     var implied_port = data['implied_port'];
     if (implied_port != null && implied_port != 0) {
       peer = PeerValue(address, port);
@@ -193,6 +193,7 @@ class DHT {
       if (peers.length > _maxPeerNum) {
         peers.removeFirst();
       }
+      _fireFoundNewPeer(peer.address, peer.port, infoHashStr);
     }
   }
 
@@ -290,20 +291,23 @@ class DHT {
     var node = _root.findNode(qid);
     if (node == null) return;
     node.resetCleanupTimer();
-    var token = String.fromCharCodes(data['token']);
+    var token;
+    if (data[TOKEN_KEY] != null) {
+      token = String.fromCharCodes(data['token']);
+    }
     if (token == null) {
       log('Response Error',
           error: 'Dont include Token', name: runtimeType.toString());
-      return;
     }
     var infoHash = data['__additional'];
     if (infoHash == null) {
       log('Inner Error',
           error: 'InfoHash didn\'t record', name: runtimeType.toString());
-      return;
     }
     // 如果没有宣布，就宣布一次
-    if (node.announced[infoHash] == null || !node.announced[infoHash]) {
+    if (infoHash != null &&
+        (node.announced[infoHash] == null || !node.announced[infoHash]) &&
+        token != null) {
       node.token[infoHash] = token;
       var peerPort = _announceTable[infoHash];
       if (peerPort != null) {

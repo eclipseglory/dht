@@ -15,7 +15,7 @@ void main() async {
   // print(String.fromCharCodes([103, 101, 116, 95, 112, 101, 101, 114, 115]));
   // print(String.fromCharCodes([112, 105, 110, 103]));
   // exit(1);
-  var torrent = await Torrent.parse('example/sample3.torrent');
+  var torrent = await Torrent.parse('example/test7.torrent');
   var infohashStr = String.fromCharCodes(torrent.infoHashBuffer);
   var dht = DHT();
   var test = <String>{};

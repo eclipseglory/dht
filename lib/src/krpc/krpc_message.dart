@@ -61,12 +61,7 @@ List<int> responseMessage(String transactionId, Map response) {
     METHOD_KEY: RESPONSE_KEY,
     RESPONSE_KEY: response
   };
-  var r = bencoder.encode(message);
-  // TODO delete soon:
-  var m = bencoder.decode(r);
-
-  print('发送respinse L: $m');
-  return r;
+  return bencoder.encode(message);
 }
 
 /// `error = {"t":"aa", "y":"e", "e":[201, "A Generic Error Ocurred"]}`

@@ -59,7 +59,6 @@ class Bucket extends TreeNode {
 
   void _nodeIsOutTime(Node node) {
     node.offTimeToCleanup(_nodeIsOutTime);
-    print('删除超过事件的节点 ${node.id.toString()}');
     removeNode(node);
   }
 

@@ -23,11 +23,13 @@ The method `announce` can invoke after `DHT` bootstrap. But I suggest that invok
 
 Onece `DHT` startted , it will check if there is ant `announce` , if it has , each new DHT node added , it will try to announce the local peer to the new node. 
 
-Before send `announce_peer` query , it **should** send `get_peers` query to get the `token` first , so I don't expose any method to get the peers for `infoHash`, when user invoke `announce` method , it will fire `get_peers` query automatically and return the result. In other word , if user isn't downloading any resource , he will not to `announce` local peer and he dont need any related peers also.
+Before send `announce_peer` query , it **should** send `get_peers` query to get the `token` first , so when user invoke `announce` method , it will fire `get_peers` query automatically and return the result. In other word , if user isn't downloading any resource , he will not to `announce` local peer and he dont need any related peers also. However, user can invoke `requestPeers` method to request the peers:
 
+```dart
+  dht.requestPeers(infoHashStr);
+```
 
-
-For get the peers , to add listener for `DHT` instance, when it found any new peer , it will notify the listener:
+When `DHT` found any new peer , it will notify the listener:
 
 ```dart
   dht.onNewPeer((address, port, infoHash) {

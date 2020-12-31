@@ -432,18 +432,23 @@ class _KRPC implements KRPC {
           Protocal_Error, null, 'Data Don\'t Contains y or t', address, port);
       return;
     }
-    var tid =
-        String.fromCharCodes(data[TRANSACTION_KEY], 0, 2); //不就知道为什么有些Tid是4个字节的
+    var tid;
+    try {
+      tid = String.fromCharCodes(data[TRANSACTION_KEY], 0, 2);
+    } catch (e) {} //不就知道为什么有些Tid是4个字节的
     // print('请求响应 $tid ,目前pending请求数：$_pendingQuery');
-    if (tid.length != 2) {
+    if (tid == null && tid.length != 2) {
       _fireError(
           Protocal_Error, null, 'Incorret Transaction ID', address, port);
       return;
     }
     var additionalValues = _transactionsValues[tid];
     var event = _cleanTransaction(tid);
-    var method = String.fromCharCodes(data[METHOD_KEY], 0, 1);
-    if (method == RESPONSE_KEY) {
+    var method;
+    try {
+      method = String.fromCharCodes(data[METHOD_KEY], 0, 1);
+    } catch (e) {}
+    if (method == RESPONSE_KEY && data[RESPONSE_KEY] != null) {
       var idBytes = data[RESPONSE_KEY][ID_KEY];
       if (idBytes == null) {
         _fireError(Protocal_Error, tid, 'Incorrect Node ID', address, port);
@@ -457,7 +462,9 @@ class _KRPC implements KRPC {
       _fireResponse(event, idBytes, address, port, r);
       return;
     }
-    if (method == QUERY_KEY) {
+    if (method == QUERY_KEY &&
+        data[QUERY_KEY] != null &&
+        data[QUERY_KEY].isNotEmpty) {
       var queryKey = String.fromCharCodes(data[QUERY_KEY]);
       if (!QUERY_KEYS.contains(queryKey)) {
         _fireError(
@@ -489,7 +496,7 @@ class _KRPC implements KRPC {
     }
     if (method == ERROR_KEY) {
       var error = data[ERROR_KEY];
-      if (error != null) {
+      if (error != null && error.length >= 2) {
         var code = error[0];
         var msg = String.fromCharCodes(error[1]);
         _getError(tid, address, port, code, msg);

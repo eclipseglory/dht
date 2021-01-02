@@ -436,7 +436,9 @@ class _KRPC implements KRPC {
     var tid;
     try {
       tid = String.fromCharCodes(data[TRANSACTION_KEY], 0, 2);
-    } catch (e) {} //不就知道为什么有些Tid是4个字节的
+    } catch (e) {
+      log('解析Tid出错', error: e, name: runtimeType.toString());
+    } //不就知道为什么有些Tid是4个字节的
     // print('请求响应 $tid ,目前pending请求数：$_pendingQuery');
     if (tid == null && tid.length != 2) {
       _fireError(
@@ -448,7 +450,9 @@ class _KRPC implements KRPC {
     var method;
     try {
       method = String.fromCharCodes(data[METHOD_KEY], 0, 1);
-    } catch (e) {}
+    } catch (e) {
+      log('解析Method出错', error: e, name: runtimeType.toString());
+    }
     if (method == RESPONSE_KEY && data[RESPONSE_KEY] != null) {
       var idBytes = data[RESPONSE_KEY][ID_KEY];
       if (idBytes == null) {
@@ -525,7 +529,7 @@ class _KRPC implements KRPC {
   void _fireError(
       int code, String tid, String msg, InternetAddress address, int port) {
     if (tid != null) {
-      var event = _transactionsMap.remove(tid);
+      _transactionsMap.remove(tid);
       _timeoutMap[tid]?.cancel();
       _timeoutMap.remove(tid);
       error(tid, address, port, code, msg);

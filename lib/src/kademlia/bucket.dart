@@ -82,7 +82,6 @@ class Bucket extends TreeNode {
       var node = t.node;
       _count--;
       _nodes.remove(node);
-      var p = t.parent;
       t.dispose();
       if (isEmpty) {
         _fireEmptyEvent();

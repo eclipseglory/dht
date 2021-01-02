@@ -1,7 +1,7 @@
 import 'package:bencode_dart/bencode_dart.dart' as bencoder;
+import 'package:dartorrent_common/dartorrent_common.dart';
 
 import '../kademlia/node.dart';
-import '../kademlia/peer_value.dart';
 
 /// A KRPC message is a single dictionary with three keys common to every message
 /// and additional keys depending on the type of message.
@@ -117,7 +117,7 @@ List<int> getPeersMessage(
 
 /// response : `{"id" : "<queried nodes id>", "token" :"<opaque write token>", "values" : ["<peer 1 info string>", "<peer 2 info string>"],"nodes" : "<compact node info>"}`
 List<int> getPeersResponse(String transactionId, String nodeId, String token,
-    {Iterable<Node> nodes, Iterable<PeerValue> peers}) {
+    {Iterable<Node> nodes, Iterable<CompactAddress> peers}) {
   var nodesStr;
   if (nodes != null && nodes.isNotEmpty) {
     nodesStr = nodes.fold('', (previousValue, node) {

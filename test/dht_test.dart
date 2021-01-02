@@ -4,10 +4,10 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:bencode_dart/bencode_dart.dart';
+import 'package:dartorrent_common/dartorrent_common.dart';
 import 'package:dht/src/kademlia/id.dart';
 import 'package:dht/src/kademlia/node.dart';
 import 'package:dht/src/krpc/krpc_message.dart';
-import 'package:dht/src/kademlia/peer_value.dart';
 import 'package:dht/src/kademlia/bucket.dart';
 import 'package:dht/src/kademlia/tree_node.dart';
 import 'package:test/test.dart';
@@ -70,21 +70,26 @@ void main() {
 
   group('PeerValue - ', () {
     test('Create/Parse', () {
-      var peerValue = PeerValue(InternetAddress.tryParse('128.2.1.3'), 12311);
-      var bytes = peerValue.bytes;
-      var p2 = PeerValue.parse(bytes);
-      assert(p2.port == peerValue.port && p2.ip == peerValue.ip, 'Parse error');
+      var peerValue =
+          CompactAddress(InternetAddress.tryParse('128.2.1.3'), 12311);
+      var bytes = peerValue.toBytes();
+      var p2 = CompactAddress.parseIPv4Address(bytes);
+      assert(
+          p2.port == peerValue.port &&
+              p2.addressString == peerValue.addressString,
+          'Parse error');
     });
 
     test('Contact encoding string', () {
-      var peerValue = PeerValue(InternetAddress.tryParse('128.2.1.3'), 12311);
+      var peerValue =
+          CompactAddress(InternetAddress.tryParse('128.2.1.3'), 12311);
       var str = peerValue.toContactEncodingString();
       var bs = latin1.encode(str);
       assert(bs.length == 6);
-      var p2 = PeerValue.parse(bs);
+      var p2 = CompactAddress.parseIPv4Address(bs);
       assert(
           (p2.port == peerValue.port) &&
-              (p2.ip == peerValue.ip) &&
+              (p2.addressString == peerValue.addressString) &&
               (str == p2.toContactEncodingString()),
           'Parse error');
     });
@@ -100,8 +105,8 @@ void main() {
       }
       var offset = 0;
       for (var i = 0; i < n; i++, offset += 6) {
-        var p2 = PeerValue.parse(testBytes, offset);
-        var b = p2.bytes;
+        var p2 = CompactAddress.parseIPv4Address(testBytes, offset);
+        var b = p2.toBytes();
         for (var h = 0; h < 6; h++) {
           assert(b[h] == testBytes[offset + h]);
         }
@@ -308,9 +313,9 @@ void main() {
       var nid = ID.randomID(20).toString();
       var nodes = <Node>[];
       nodes.add(Node(ID.randomID(20),
-          PeerValue(InternetAddress.tryParse('120.0.0.1'), 2222)));
+          CompactAddress(InternetAddress.tryParse('120.0.0.1'), 2222)));
       nodes.add(Node(ID.randomID(20),
-          PeerValue(InternetAddress.tryParse('196.168.0.1'), 2223)));
+          CompactAddress(InternetAddress.tryParse('196.168.0.1'), 2223)));
       var bytes = findNodeResponse(tid, nid, nodes);
       var obj = decode(bytes);
       assert(String.fromCharCodes(obj['y']) == 'r', 'y error');
@@ -321,7 +326,7 @@ void main() {
       var rns = [];
       for (var i = 0; i < nodeBytes.length; i += 26) {
         var id = ID.createID(nodeBytes, i, 20);
-        var peerValue = PeerValue.parse(nodeBytes, i + 20);
+        var peerValue = CompactAddress.parseIPv4Address(nodeBytes, i + 20);
         rns.add(Node(id, peerValue));
       }
       assert(rns.length == nodes.length);
@@ -355,7 +360,7 @@ void main() {
       var testId = ID.randomID(2);
       var tid = testId.toString();
       var nid = ID.randomID(20).toString();
-      var peers = <PeerValue>[];
+      var peers = <CompactAddress>[];
 
       var r = Random();
       var n = 10;
@@ -367,7 +372,7 @@ void main() {
       }
       var offset = 0;
       for (var i = 0; i < n; i++, offset += 6) {
-        peers.add(PeerValue.parse(testBytes, offset));
+        peers.add(CompactAddress.parseIPv4Address(testBytes, offset));
       }
 
       var bytes = getPeersResponse(tid, nid, 'token', peers: peers);
@@ -380,8 +385,8 @@ void main() {
       var pbs = obj['r']['values'];
       for (var i = 0; i < pbs.length; i++) {
         var ps = pbs[i];
-        var p = PeerValue.parse(ps);
-        assert(peers[i].ip == p.ip);
+        var p = CompactAddress.parseIPv4Address(ps);
+        assert(peers[i].addressString == p.addressString);
         assert(peers[i].port == p.port);
       }
     });

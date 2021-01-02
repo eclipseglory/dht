@@ -2,6 +2,7 @@ import 'dart:developer' as dev;
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:crypto/crypto.dart';
+import 'package:dartorrent_common/dartorrent_common.dart';
 
 import 'package:dht/dht.dart';
 import 'package:dht/src/kademlia/id.dart';
@@ -18,15 +19,15 @@ void main() async {
   var torrent = await Torrent.parse('example/test7.torrent');
   var infohashStr = String.fromCharCodes(torrent.infoHashBuffer);
   var dht = DHT();
-  var test = <String>{};
+  var test = <CompactAddress>{};
   var newNodeCount = 0;
   dht.announce(infohashStr, 22123);
   dht.onError((code, msg) {
     dev.log('发生错误', error: '[$code]$msg');
   });
-  dht.onNewPeer((address, port, token) {
-    if (test.add('${address.address}:$port')) {
-      dev.log('新加入peer $address : $port ， 已有${test.length} 个peer');
+  dht.onNewPeer((peer, token) {
+    if (test.add(peer)) {
+      dev.log('新加入peer $peer  ， 已有${test.length} 个peer');
     }
   });
 
@@ -35,7 +36,7 @@ void main() async {
     dht.addBootstrapNode(url);
   });
 
-  Future.delayed(Duration(seconds: 20), () {
+  Future.delayed(Duration(seconds: 10), () {
     dht.stop();
     print(dht);
   });

@@ -4,9 +4,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bencode_dart/bencode_dart.dart';
+import 'package:dartorrent_common/dartorrent_common.dart';
 import 'package:dht/src/kademlia/id.dart';
 import 'package:dht/src/kademlia/node.dart';
-import 'package:dht/src/kademlia/peer_value.dart';
 
 import 'krpc_message.dart';
 
@@ -84,7 +84,7 @@ abstract class KRPC {
 
   void responseGetPeers(String tid, String infoHash, InternetAddress address,
       int port, String token,
-      {Iterable<Node> nodes, Iterable<PeerValue> peers});
+      {Iterable<Node> nodes, Iterable<CompactAddress> peers});
 
   bool onGetPeersReponse(KRPCResponseHandler handler);
 
@@ -290,7 +290,7 @@ class _KRPC implements KRPC {
   @override
   void responseGetPeers(String tid, String infoHash, InternetAddress address,
       int port, String token,
-      {Iterable<Node> nodes, Iterable<PeerValue> peers}) {
+      {Iterable<Node> nodes, Iterable<CompactAddress> peers}) {
     if (isStopped || _socket == null) return;
     var message = getPeersResponse(tid, _nodeId.toString(), token,
         nodes: nodes, peers: peers);
@@ -337,6 +337,7 @@ class _KRPC implements KRPC {
   }
 
   void _processQueryRequest(dynamic event) {
+    if (isStopped) return;
     _increasePendingQuery();
     var message = event['message'] as List<int>;
     var address = event['address'] as InternetAddress;
@@ -571,11 +572,16 @@ class _KRPC implements KRPC {
       timer?.cancel();
     });
     _timeoutMap.clear();
-    await _queryController?.close();
-    _queryController = null;
-
-    await _querySub?.cancel();
-    _querySub = null;
+    try {
+      await _querySub?.cancel();
+    } finally {
+      _querySub = null;
+    }
+    try {
+      await _queryController?.close();
+    } finally {
+      _queryController = null;
+    }
   }
 
   @override

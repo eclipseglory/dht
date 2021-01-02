@@ -5,22 +5,21 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:dartorrent_common/dartorrent_common.dart';
 import 'package:dht/src/kademlia/id.dart';
 import 'package:dht/src/kademlia/node.dart';
-import 'package:dht/src/kademlia/peer_value.dart';
 import 'package:dht/src/krpc/krpc.dart';
 import 'package:dht/src/krpc/krpc_message.dart';
 
-typedef NewPeerHandler = void Function(
-    InternetAddress address, int port, String hashinfo);
+typedef NewPeerHandler = void Function(CompactAddress address, String hashinfo);
 
 class DHT {
   KRPC _krpc;
 
   Node _root;
 
-  final Map<String, Queue<PeerValue>> _resourceTable =
-      <String, Queue<PeerValue>>{};
+  final Map<String, Queue<CompactAddress>> _resourceTable =
+      <String, Queue<CompactAddress>>{};
 
   final Map<String, int> _announceTable = <String, int>{};
 
@@ -75,7 +74,8 @@ class DHT {
 
     _krpc.onAnnouncePeerRequest(_processAnnouncePeerRequest);
     _krpc.onAnnouncePeerResponse((nodeId, address, port, data) {});
-    _root ??= Node(id, PeerValue(InternetAddress.anyIPv4, _krpc.port), -1, 8);
+    _root ??=
+        Node(id, CompactAddress(InternetAddress.anyIPv4, _krpc.port), -1, 8);
     _root.onBucketEmpty(_allFindNode);
     _defaultBootstrapNodes.forEach((url) {
       addBootstrapNode(url);
@@ -119,9 +119,9 @@ class DHT {
     return _newPeerHandler.remove(handler);
   }
 
-  void _fireFoundNewPeer(InternetAddress address, int port, String infoHash) {
+  void _fireFoundNewPeer(CompactAddress peer, String infoHash) {
     _newPeerHandler.forEach((handler) {
-      Timer.run(() => handler(address, port, infoHash));
+      Timer.run(() => handler(peer, infoHash));
     });
   }
 
@@ -173,12 +173,12 @@ class DHT {
       return;
     }
     var infoHashStr = String.fromCharCodes(infoHash);
-    _resourceTable[infoHashStr] ??= Queue<PeerValue>();
+    _resourceTable[infoHashStr] ??= Queue<CompactAddress>();
     var peers = _resourceTable[infoHashStr];
-    PeerValue peer;
+    CompactAddress peer;
     var implied_port = data['implied_port'];
     if (implied_port != null && implied_port != 0) {
-      peer = PeerValue(address, port);
+      peer = CompactAddress(address, port);
     } else {
       var peerPort = data['port'];
       if (peerPort == null) {
@@ -186,14 +186,14 @@ class DHT {
             tid, address, port, 203, 'invalid arguments - port is null');
         return;
       }
-      peer = PeerValue(address, peerPort);
+      peer = CompactAddress(address, peerPort);
     }
     if (peer != null) {
       peers.addLast(peer);
       if (peers.length > _maxPeerNum) {
         peers.removeFirst();
       }
-      _fireFoundNewPeer(peer.address, peer.port, infoHashStr);
+      _fireFoundNewPeer(peer, infoHashStr);
     }
   }
 
@@ -323,9 +323,19 @@ class DHT {
       var peers = data[VALUES_KEY];
       peers.forEach((peer) {
         try {
-          var p = PeerValue.parse(peer);
-          if (p != null) {
-            _fireFoundNewPeer(p.address, p.port, infoHash);
+          if (peer is List<int>) {
+            if (peer.length <= 6) {
+              var p = CompactAddress.parseIPv4Address(peer);
+              if (p != null) {
+                _fireFoundNewPeer(p, infoHash);
+              }
+            }
+            if (peer.length > 6 && peer.length <= 18) {
+              var p = CompactAddress.parseIPv6Address(peer);
+              if (p != null) {
+                _fireFoundNewPeer(p, infoHash);
+              }
+            }
           }
         } catch (e) {
           // do nothing
@@ -367,7 +377,7 @@ class DHT {
       // 如果节点已经在本地网络中并且findnode过，就不再会对获得的nodes进行处理
       return;
     }
-    node ??= Node(qid, PeerValue(address, port), _cleanNodeTime);
+    node ??= Node(qid, CompactAddress(address, port), _cleanNodeTime);
     node.queried = true;
     if (_root.add(node)) {
       if (_announceTable.keys.isNotEmpty) {
@@ -383,7 +393,7 @@ class DHT {
       try {
         var id = ID.createID(nodes, i, 20);
         if (_canAdd(id)) {
-          var p = PeerValue.parse(nodes, i + 20);
+          var p = CompactAddress.parseIPv4Address(nodes, i + 20);
           if (p != null) {
             _tryToGetNode(p.address, p.port);
           }

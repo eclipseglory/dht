@@ -82,6 +82,7 @@ class Bucket extends TreeNode {
       var node = t.node;
       _count--;
       _nodes.remove(node);
+      var p = t.parent;
       t.dispose();
       if (isEmpty) {
         _fireEmptyEvent();
@@ -133,6 +134,9 @@ class Bucket extends TreeNode {
   void dispose() {
     super.dispose();
     _emptyHandler.clear();
+    _nodes.forEach((element) {
+      element.dispose();
+    });
     _nodes.clear();
     _count = 0;
   }

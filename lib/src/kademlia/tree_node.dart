@@ -80,6 +80,14 @@ class TreeNode {
     if (temp2 != null) {
       temp2.dispose();
     }
+    var p = parent;
+    if (p != null) {
+      if (p?.left == this) {
+        p?.left = null;
+      } else {
+        p?.right = null;
+      }
+    }
     parent = null;
     _left = null;
     _right = null;

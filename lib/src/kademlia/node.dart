@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dartorrent_common/dartorrent_common.dart';
+
 import 'id.dart';
-import 'peer_value.dart';
 import 'bucket.dart';
 
 class Node {
@@ -23,13 +24,13 @@ class Node {
   final Set<void Function(int index)> _bucketEmptyHandler =
       <void Function(int index)>{};
 
-  final PeerValue _peerValue;
+  final CompactAddress _compactAddress;
 
   List<Bucket> _buckets;
 
-  InternetAddress get address => _peerValue.address;
+  InternetAddress get address => _compactAddress.address;
 
-  int get port => _peerValue.port;
+  int get port => _compactAddress.port;
 
   List<Bucket> get buckets {
     _buckets ??= _getBuckets();
@@ -40,7 +41,8 @@ class Node {
 
   final Map<String, bool> announced = <String, bool>{};
 
-  Node(this.id, this._peerValue, [this._cleanupTime = 15 * 60, this.k = 8]) {
+  Node(this.id, this._compactAddress,
+      [this._cleanupTime = 15 * 60, this.k = 8]) {
     assert(_cleanupTime != null && k != null,
         'cleanup time and K can not be null');
     resetCleanupTimer();
@@ -166,13 +168,13 @@ class Node {
   }
 
   String toContactEncodingString() {
-    if (id == null || _peerValue == null) return null;
-    return '${id.toString()}${_peerValue.toContactEncodingString()}';
+    if (id == null || _compactAddress == null) return null;
+    return '${id.toString()}${_compactAddress.toContactEncodingString()}';
   }
 
   @override
   String toString() {
-    return 'Node[id:${id?.toString()},Peer:${_peerValue?.toString()}]';
+    return 'Node[id:${id?.toString()},Peer:${_compactAddress?.toString()}]';
   }
 
   bool get isDisposed => _disposed;

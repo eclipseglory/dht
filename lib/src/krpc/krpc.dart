@@ -503,7 +503,8 @@ class _KRPC implements KRPC {
       var error = data[ERROR_KEY];
       if (error != null && error.length >= 2) {
         var code = error[0];
-        var msg = String.fromCharCodes(error[1]);
+        var msg = 'unknown';
+        if (error is List) msg = String.fromCharCodes(error[1]);
         _getError(tid, address, port, code, msg);
       }
       return;

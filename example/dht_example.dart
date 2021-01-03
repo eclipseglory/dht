@@ -1,12 +1,7 @@
 import 'dart:developer' as dev;
-import 'dart:io';
-import 'dart:math' as math;
-import 'package:crypto/crypto.dart';
 import 'package:dartorrent_common/dartorrent_common.dart';
 
 import 'package:dht/dht.dart';
-import 'package:dht/src/kademlia/id.dart';
-
 import 'package:torrent_model/torrent_model.dart';
 
 void main() async {
@@ -20,7 +15,6 @@ void main() async {
   var infohashStr = String.fromCharCodes(torrent.infoHashBuffer);
   var dht = DHT();
   var test = <CompactAddress>{};
-  var newNodeCount = 0;
   dht.announce(infohashStr, 22123);
   dht.onError((code, msg) {
     dev.log('发生错误', error: '[$code]$msg');

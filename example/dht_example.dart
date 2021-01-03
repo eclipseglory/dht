@@ -1,7 +1,7 @@
 import 'dart:developer' as dev;
 import 'package:dartorrent_common/dartorrent_common.dart';
 
-import 'package:dht/dht.dart';
+import 'package:dht_dart/dht_dart.dart';
 import 'package:torrent_model/torrent_model.dart';
 
 void main() async {

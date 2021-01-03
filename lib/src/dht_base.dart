@@ -6,10 +6,11 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:dartorrent_common/dartorrent_common.dart';
-import 'package:dht/src/kademlia/id.dart';
-import 'package:dht/src/kademlia/node.dart';
-import 'package:dht/src/krpc/krpc.dart';
-import 'package:dht/src/krpc/krpc_message.dart';
+
+import 'kademlia/id.dart';
+import 'kademlia/node.dart';
+import 'krpc/krpc.dart';
+import 'krpc/krpc_message.dart';
 
 typedef NewPeerHandler = void Function(CompactAddress address, String hashinfo);
 

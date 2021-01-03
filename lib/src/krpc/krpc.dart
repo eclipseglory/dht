@@ -5,10 +5,10 @@ import 'dart:typed_data';
 
 import 'package:bencode_dart/bencode_dart.dart';
 import 'package:dartorrent_common/dartorrent_common.dart';
-import 'package:dht/src/kademlia/id.dart';
-import 'package:dht/src/kademlia/node.dart';
 
 import 'krpc_message.dart';
+import '../kademlia/id.dart';
+import '../kademlia/node.dart';
 
 enum EVENT { PING, GET_PEERS, FIND_NODE, ANNOUNCE_PEER }
 

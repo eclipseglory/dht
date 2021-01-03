@@ -1,4 +1,4 @@
-name: dht
+name: dht_dart
 description: A DHT protocal implemented by Dart.
 version: 0.0.5
 repository: https://github.com/eclipseglory/dht

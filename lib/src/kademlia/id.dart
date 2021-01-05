@@ -4,11 +4,13 @@ import 'distance.dart';
 
 const BASE_NUM = 128;
 
+/// A ID with any length bytes array
 class ID {
   List<int> _ids;
 
   String _str;
 
+  /// [byteLength] is the bytes size , default is 20
   ID([int byteLength = 20]) {
     _ids = List<int>(byteLength);
   }
@@ -38,6 +40,7 @@ class ID {
     }
   }
 
+  /// XOR another ID to get a `Distance` instance.
   Distance distanceBetween(ID id) {
     if (id.byteLength != byteLength) throw 'ID Different Length';
     var ids = List<int>(_ids.length);

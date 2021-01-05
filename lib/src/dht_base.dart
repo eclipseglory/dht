@@ -14,6 +14,10 @@ import 'krpc/krpc_message.dart';
 
 typedef NewPeerHandler = void Function(CompactAddress address, String hashinfo);
 
+/// DHT service
+///
+/// The default bootstrape is `router.bittorrent.com` , `router.utorrent.com` ,`dht.transmissionbt.com`.
+/// Each UDP timeout is 15 seconds, max request process number is 24
 class DHT {
   KRPC _krpc;
 
@@ -47,6 +51,13 @@ class DHT {
 
   int get port => _port;
 
+  /// Start DHT service
+  /// [cleanNodeTime] : default value is 15 minutes(15*60 seconds) , if the node which added , have no any query/response during this time
+  /// DHT will remove it.
+  ///
+  /// [udpTimeout] : Each query timeout time, default is 15 seconds
+  /// [maxQeury] : the max number of the queries processing (`queries_number`). if `queries_number` reach this number , DHT won't
+  /// send any request to remote until the old request was reponse or timeout to reduce the `queries_number`.
   Future bootstrap(
       {int cleanNodeTime = 15 * 60,
       int udpTimeout = TIME_OUT_TIME,
@@ -84,6 +95,12 @@ class DHT {
     return _port;
   }
 
+  /// Stop DHT service.
+  ///
+  /// All handlers will be removed, `krpc` service will be stopped and close the UDP socket.
+  /// All the `Node` will be disopse and removed from `root` node , `root` node will set `null`
+  ///
+  /// User can invoke `bootstrap` after stop , everything will be fresh.
   Future stop() async {
     _resourceTable.clear();
     _announceTable.clear();
@@ -280,6 +297,7 @@ class DHT {
     var nodes = _findClosestNode(infohash);
     var infoHashStr = String.fromCharCodes(infohash);
     var peers = _resourceTable[infoHashStr];
+    // TODO 这里要区分IPv6和IPv4 !!!!!!!
     var token = String.fromCharCodes(_createToken(address));
     // 这里要返回Peers
     _krpc.responseGetPeers(tid, infoHashStr, address, port, token,
@@ -436,6 +454,14 @@ class DHT {
     }
   }
 
+  ///
+  /// [infohash] is the torrent infohash string (is not hex format string).
+  ///
+  /// The [port] is the TCP listener port of the local.
+  ///
+  /// This method will record which `infohash` local have and DHT will `announce_peer`
+  /// this `infohash` to other nodes , before `announce_peer`, DHT will request `get_peers`
+  /// first to get the `token`
   void announce(String infohash, int port) {
     assert(
         infohash != null && infohash.length == 20, 'Incorrect infohash string');
@@ -460,6 +486,19 @@ class DHT {
     });
   }
 
+  ///
+  /// Add a bootstrape node url.
+  ///
+  /// Sometimes the torrent file contains a `nodes` property , user can use this method
+  /// to add the `nodes`.
+  ///
+  /// DHT will request `find_node` query (find local self to fill the local nodes) to the node added.
+  ///
+  /// **NOTE**
+  ///
+  /// This DHT implemention usually don't send `ping` to the new node found/added, it will send `find_node`
+  /// directly. If the query node response , DHT will add it into the local nodes, or the node won't be added.
+  ///
   void addBootstrapNode(Uri url) async {
     var host = url.host;
     var port = url.port;

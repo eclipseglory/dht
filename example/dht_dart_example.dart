@@ -17,11 +17,12 @@ void main() async {
   var test = <CompactAddress>{};
   dht.announce(infohashStr, 22123);
   dht.onError((code, msg) {
-    dev.log('发生错误', error: '[$code]$msg');
+    dev.log('Error happend:', error: '[$code]$msg');
   });
   dht.onNewPeer((peer, token) {
     if (test.add(peer)) {
-      dev.log('新加入peer $peer  ， 已有${test.length} 个peer');
+      dev.log(
+          'Found new peer address : $peer  ， Have ${test.length} peers already');
     }
   });
 
@@ -32,7 +33,6 @@ void main() async {
 
   Future.delayed(Duration(seconds: 10), () {
     dht.stop();
-    print(dht);
   });
 }
 

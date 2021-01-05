@@ -6,6 +6,8 @@ import 'package:dartorrent_common/dartorrent_common.dart';
 import 'id.dart';
 import 'bucket.dart';
 
+/// Kademlia node
+///
 class Node {
   bool _disposed = false;
 

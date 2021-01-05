@@ -29,14 +29,22 @@ typedef KRPCErrorHandler = void Function(
     InternetAddress address, int port, int code, String msg);
 
 abstract class KRPC {
+  /// Start KRPC service.
+  ///
+  /// Actually it start to UDP listening and init some parameters.
   Future start();
 
+  /// Stop KRPC service.
+  ///
+  /// Close the UDP sockets and clean all handlers.
   Future stop([dynamic reason]);
 
+  /// Local node id
   ID get nodeId;
 
   bool get isStopped;
 
+  /// UDP port
   int get port;
 
   /// Code	Description
@@ -51,24 +59,28 @@ abstract class KRPC {
 
   bool offError(KRPCErrorHandler handler);
 
+  /// send `ping` query to remote
   void ping(InternetAddress address, int port);
 
   bool onPong(KRPCResponseHandler handler);
 
   bool offPong(KRPCResponseHandler handler);
 
+  /// send `ping` response to remote
   void pong(String tid, InternetAddress address, int port);
 
   bool onPing(KRPCQueryHandler handler);
 
   bool offPing(KRPCQueryHandler handler);
 
+  /// send `find_node` query to remote
   void findNode(String targetId, InternetAddress address, int port);
 
   bool onFindNodeResponse(KRPCResponseHandler handler);
 
   bool offFindNodeResponse(KRPCResponseHandler handler);
 
+  /// send `find_node` response to remote
   void responseFindNode(
       String tid, List<Node> nodes, InternetAddress address, int port);
 
@@ -76,12 +88,14 @@ abstract class KRPC {
 
   bool offFindNodeRequest(KRPCQueryHandler handler);
 
+  /// send `get_peers` to remote
   void getPeers(String infoHash, InternetAddress address, int port);
 
   bool onGetPeersRequest(KRPCQueryHandler handler);
 
   bool offGetPeersRequest(KRPCQueryHandler handler);
 
+  /// send `get_peers` response to remote
   void responseGetPeers(String tid, String infoHash, InternetAddress address,
       int port, String token,
       {Iterable<Node> nodes, Iterable<CompactAddress> peers});
@@ -90,6 +104,7 @@ abstract class KRPC {
 
   bool offGetPeersResponse(KRPCResponseHandler handler);
 
+  /// send `announce_peer` to remote
   void announcePeer(String infoHash, int peerPort, String token,
       InternetAddress address, int port,
       [bool impliedPort = true]);
@@ -98,12 +113,14 @@ abstract class KRPC {
 
   bool offAnnouncePeerResponse(KRPCResponseHandler handler);
 
+  /// send `announce_peer` response to remote
   void responseAnnouncePeer(String tid, InternetAddress address, int port);
 
   bool onAnnouncePeerRequest(KRPCQueryHandler handler);
 
   bool offAnnouncePeerRequest(KRPCQueryHandler handler);
 
+  /// Create a new KRPC service.
   factory KRPC.newService(ID nodeId,
       {int timeout = TIME_OUT_TIME, int maxQuery = 24}) {
     var k = _KRPC(nodeId, timeout, maxQuery);

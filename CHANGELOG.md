@@ -1,3 +1,6 @@
 ## 0.0.5
+- Initial version
 
-- Initial version, created by Stagehand
+## 0.0.6
+- Add doc
+- Change example

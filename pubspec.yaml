@@ -1,6 +1,6 @@
 name: dht_dart
 description: A DHT protocal implemented by Dart. This package implemented BEP-0005 for torrent client
-version: 0.0.6
+version: 0.0.7
 repository: https://github.com/eclipseglory/dht
 issue_tracker : https://github.com/eclipseglory/dht/issues
 publish_to: https://pub.dev/
@@ -10,9 +10,7 @@ environment:
 
 dependencies:
    bencode_dart : ^1.0.2
-   dartorrent_common: ^1.0.1
-  #  dartorrent_common:
-  #   path : '../../dartorrent_common'
+   dartorrent_common: '>=1.0.3 <2.0.0'
 dev_dependencies:
   pedantic: ^1.9.0
   test: ^1.14.4

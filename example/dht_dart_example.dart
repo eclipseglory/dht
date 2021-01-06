@@ -5,12 +5,6 @@ import 'package:dht_dart/dht_dart.dart';
 import 'package:torrent_model/torrent_model.dart';
 
 void main() async {
-  // [103, 101, 116, 95, 112, 101, 101, 114, 115]
-  // [112, 105, 110, 103]
-
-  // print(String.fromCharCodes([103, 101, 116, 95, 112, 101, 101, 114, 115]));
-  // print(String.fromCharCodes([112, 105, 110, 103]));
-  // exit(1);
   var torrent = await Torrent.parse('example/test7.torrent');
   var infohashStr = String.fromCharCodes(torrent.infoHashBuffer);
   var dht = DHT();

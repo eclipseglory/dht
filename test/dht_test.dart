@@ -47,16 +47,7 @@ void main() {
         for (var i = j + 1; i < 20; i++) {
           newId[i] = r.nextInt(256);
         }
-        var s1 = '';
-        var s2 = '';
-        for (var i = 0; i < 20; i++) {
-          s1 += intToRadix2String(id.getValueAt(i));
-          s2 += intToRadix2String(newId[i]);
-        }
-        print(s1);
-        print(s2);
         var nid = ID.createID(newId);
-        print(nid.differentLength(id));
 
         assert(nid.differentLength(id) == l);
       }

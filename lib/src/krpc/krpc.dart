@@ -407,8 +407,14 @@ class _KRPC implements KRPC {
     _socket.listen((event) {
       if (event == RawSocketEvent.read) {
         var datagram = _socket.receive();
-        Timer.run(() => _processReceiveData(
-            datagram.address, datagram.port, datagram.data));
+        Timer.run(() {
+          try {
+            _processReceiveData(datagram.address, datagram.port, datagram.data);
+          } catch (e) {
+            log('Process Receive Message Error',
+                error: e, name: runtimeType.toString());
+          }
+        });
       }
     },
         onDone: () => stop('Remote/Local close the socket'),
@@ -457,7 +463,7 @@ class _KRPC implements KRPC {
       log('解析Tid出错', error: e, name: runtimeType.toString());
     } //不就知道为什么有些Tid是4个字节的
     // print('请求响应 $tid ,目前pending请求数：$_pendingQuery');
-    if (tid == null && tid.length != 2) {
+    if (tid == null || tid.length != 2) {
       _fireError(
           Protocal_Error, null, 'Incorret Transaction ID', address, port);
       return;
@@ -552,7 +558,7 @@ class _KRPC implements KRPC {
       _timeoutMap.remove(tid);
       error(tid, address, port, code, msg);
     } else {
-      log('UnSend Error:', error: '[$code]$msg');
+      log('UnSend Error:', error: '[$code]$msg', name: runtimeType.toString());
     }
   }
 

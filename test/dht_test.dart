@@ -14,7 +14,7 @@ import 'package:test/test.dart';
 void main() {
   group('some inner test', () {
     test('random id', () {
-      void _createPartSameId(int index) {
+      void createPartSameId(int index) {
         var l = index + 1;
         index = 159 - index;
         var id = ID.randomID(20);
@@ -53,7 +53,7 @@ void main() {
       }
 
       for (var i = -1; i < 160; i++) {
-        _createPartSameId(i);
+        createPartSameId(i);
       }
     });
   });

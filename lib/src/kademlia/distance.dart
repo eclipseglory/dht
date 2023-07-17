@@ -21,11 +21,11 @@ class Distance {
   int get hashCode => toString().hashCode;
 
   @override
-  bool operator ==(a) {
-    if (a is Distance) {
-      if (a.byteLength == byteLength) {
+  bool operator ==(other) {
+    if (other is Distance) {
+      if (other.byteLength == byteLength) {
         for (var i = 0; i < byteLength; i++) {
-          if (getValue(i) != a.getValue(i)) return false;
+          if (getValue(i) != other.getValue(i)) return false;
         }
         return true;
       }

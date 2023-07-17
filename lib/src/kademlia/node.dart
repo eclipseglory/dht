@@ -64,9 +64,9 @@ class Node {
   }
 
   void _cleanupMe() {
-    _cleanupHandler.forEach((element) {
+    for (var element in _cleanupHandler) {
       Timer.run(() => element(this));
-    });
+    }
   }
 
   List<Bucket> _getBuckets() {
@@ -75,12 +75,16 @@ class Node {
   }
 
   bool add(Node node) {
-    if (node == null) return false;
     var index = _getBucketIndex(node.id);
     if (index < 0) return false;
     var buckets = _getBuckets();
-    Bucket bucket = buckets[index];
-    bucket ??= Bucket(index, k);
+    Bucket? bucket;
+    try {
+      bucket = buckets[index];
+    } catch (e) {
+      bucket ??= Bucket(index, k);
+    }
+
     buckets[index] = bucket;
     bucket.onEmpty(_whenBucketIsEmpty);
     return bucket.addNode(node) != null;
@@ -119,9 +123,9 @@ class Node {
   }
 
   void _whenBucketIsEmpty(Bucket b) {
-    _bucketEmptyHandler.forEach((element) {
+    for (var element in _bucketEmptyHandler) {
       Timer.run(() => element(b.index));
-    });
+    }
   }
 
   bool onBucketEmpty(void Function(int index) h) {
@@ -159,15 +163,13 @@ class Node {
       var l = b.nodes.length;
       for (var i = 0; i < l; i++) {
         var node = b.nodes[i];
-        if (processor != null) {
-          processor(node);
-        }
+        processor(node);
       }
     }
   }
 
   String? toContactEncodingString() {
-    if (id == null || _compactAddress == null) return null;
+    if (_compactAddress == null) return null;
     return '${id.toString()}${_compactAddress?.toContactEncodingString()}';
   }
 

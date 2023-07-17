@@ -89,9 +89,9 @@ class DHT {
           id, CompactAddress(InternetAddress.anyIPv4, _krpc!.port!), -1, 8);
     }
     _root?.onBucketEmpty(_allFindNode);
-    _defaultBootstrapNodes.forEach((url) {
+    for (var url in _defaultBootstrapNodes) {
       addBootstrapNode(url);
-    });
+    }
     return _port;
   }
 
@@ -124,9 +124,9 @@ class DHT {
   }
 
   void _fireError(InternetAddress address, int port, int code, String msg) {
-    _errorHandler.forEach((handler) {
+    for (var handler in _errorHandler) {
       Timer.run(() => handler(code, msg));
-    });
+    }
   }
 
   bool onNewPeer(NewPeerHandler handler) {
@@ -138,9 +138,9 @@ class DHT {
   }
 
   void _fireFoundNewPeer(CompactAddress peer, String infoHash) {
-    _newPeerHandler.forEach((handler) {
+    for (var handler in _newPeerHandler) {
       Timer.run(() => handler(peer, infoHash));
-    });
+    }
   }
 
   bool _canAdd(ID id) {
@@ -181,7 +181,7 @@ class DHT {
   void _processAnnouncePeerRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
     var infoHash = data['info_hash'] as List<int>;
-    if (infoHash == null || infoHash.length != 20) {
+    if (infoHash.length != 20) {
       _krpc?.error(tid, address, port, 203, 'Bad InfoHash');
       return;
     }
@@ -194,8 +194,8 @@ class DHT {
     _resourceTable[infoHashStr] ??= Queue<CompactAddress>();
     var peers = _resourceTable[infoHashStr];
     CompactAddress peer;
-    var implied_port = data['implied_port'];
-    if (implied_port != null && implied_port != 0) {
+    var impliedPort = data['implied_port'];
+    if (impliedPort != null && impliedPort != 0) {
       peer = CompactAddress(address, port);
     } else {
       var peerPort = data['port'];
@@ -206,13 +206,12 @@ class DHT {
       }
       peer = CompactAddress(address, peerPort);
     }
-    if (peer != null) {
-      peers?.addLast(peer);
-      if (peers != null && peers.length > _maxPeerNum) {
-        peers.removeFirst();
-      }
-      _fireFoundNewPeer(peer, infoHashStr);
+
+    peers?.addLast(peer);
+    if (peers != null && peers.length > _maxPeerNum) {
+      peers.removeFirst();
     }
+    _fireFoundNewPeer(peer, infoHashStr);
   }
 
   void _allFindNode(int index) {
@@ -292,7 +291,7 @@ class DHT {
       node?.resetCleanupTimer();
     }
     var infohash = data['info_hash'] as List<int>;
-    if (infohash == null || infohash.length != 20) {
+    if (infohash.length != 20) {
       _krpc?.error(tid, address, port, 203, 'invalid arguments');
       return;
     }
@@ -405,9 +404,9 @@ class DHT {
     if (_root != null && _root!.add(node)) {
       if (_announceTable.keys.isNotEmpty) {
         // 新加入节点去请求peers
-        _announceTable.keys.forEach((infoHash) {
-          _requestGetPeers(node!, infoHash);
-        });
+        for (var infoHash in _announceTable.keys) {
+          _requestGetPeers(node, infoHash);
+        }
       }
     }
 
@@ -509,7 +508,7 @@ class DHT {
   /// This DHT implemention usually don't send `ping` to the new node found/added, it will send `find_node`
   /// directly. If the query node response , DHT will add it into the local nodes, or the node won't be added.
   ///
-  void addBootstrapNode(Uri url) async {
+  Future<void> addBootstrapNode(Uri url) async {
     var host = url.host;
     var port = url.port;
     var ip = InternetAddress.tryParse(host);
@@ -518,9 +517,9 @@ class DHT {
     } else {
       try {
         var ips = await InternetAddress.lookup(host);
-        ips.forEach((ip) {
+        for (var ip in ips) {
           _tryToGetNode(ip, port);
-        });
+        }
       } catch (e) {
         log('lookup host error:', error: e, name: runtimeType.toString());
       }

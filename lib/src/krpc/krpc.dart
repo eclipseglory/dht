@@ -545,9 +545,9 @@ class _KRPC implements KRPC {
       String tid, InternetAddress address, int port, int code, String msg) {
     log('从 ${address.address}:$port 得到一个错误消息:',
         error: '[$code]$msg', name: runtimeType.toString());
-    _errorHandlers.forEach((element) {
+    for (var element in _errorHandlers) {
       Timer.run(() => element(address, port, code, msg));
-    });
+    }
   }
 
   /// Code	Description

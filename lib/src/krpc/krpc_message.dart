@@ -105,7 +105,7 @@ Uint8List findNodeMessage(
 Uint8List findNodeResponse(
     String transactionId, String nodeId, Iterable<Node> nodes) {
   var nodesStr = nodes.fold('', (previousValue, node) {
-    return '${previousValue}${node.toContactEncodingString()}';
+    return '$previousValue${node.toContactEncodingString()}';
   });
   return responseMessage(transactionId, {ID_KEY: nodeId, NODES_KEY: nodesStr});
 }
@@ -123,15 +123,15 @@ Uint8List getPeersResponse(String transactionId, String nodeId, String token,
   String? nodesStr;
   if (nodes != null && nodes.isNotEmpty) {
     nodesStr = nodes.fold<String>('', (previousValue, node) {
-      return '${previousValue}${node.toContactEncodingString()}';
+      return '$previousValue${node.toContactEncodingString()}';
     });
   }
   List<String>? values;
   if (peers != null && peers.isNotEmpty) {
     values = [];
-    peers.forEach((peer) {
-      values?.add(peer.toContactEncodingString());
-    });
+    for (var peer in peers) {
+      values.add(peer.toContactEncodingString());
+    }
   }
   var r = <String, dynamic>{ID_KEY: nodeId, 'token': token};
   if (nodesStr != null) {

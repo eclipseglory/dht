@@ -91,9 +91,9 @@ class Bucket extends TreeNode {
   }
 
   void _fireEmptyEvent() {
-    _emptyHandler.forEach((element) {
+    for (var element in _emptyHandler) {
       element(this);
-    });
+    }
   }
 
   bool onEmpty(void Function(Bucket b) h) {
@@ -131,9 +131,9 @@ class Bucket extends TreeNode {
   void dispose() {
     super.dispose();
     _emptyHandler.clear();
-    _nodes.forEach((element) {
+    for (var element in _nodes) {
       element.dispose();
-    });
+    }
     _nodes.clear();
     _count = 0;
   }

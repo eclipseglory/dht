@@ -30,13 +30,12 @@ class Bucket extends TreeNode {
 
   List<Node> get nodes => _nodes;
 
-  TreeNode addNode(Node node) {
+  TreeNode? addNode(Node? node) {
     if (node == null) return null;
     if (_count >= bucketMaxSize) {
       return null;
     } else {
       var currentNode = _generateTreeNode(node.id);
-      if (currentNode == null) return null;
       if (currentNode.node == null) {
         _count++;
         currentNode.node = node;
@@ -54,7 +53,7 @@ class Bucket extends TreeNode {
     if (index > 62) {
       return _maxSize;
     }
-    return min(_maxSize, pow(2, index));
+    return min(_maxSize, pow(2, index).toInt());
   }
 
   void _nodeIsOutTime(Node node) {
@@ -62,9 +61,9 @@ class Bucket extends TreeNode {
     removeNode(node);
   }
 
-  TreeNode removeNode(dynamic a) {
+  TreeNode? removeNode(dynamic a) {
     if (a == null) return null;
-    var id;
+    ID? id;
     if (a is TreeNode) {
       var n = a.node;
       if (n == null) return null;
@@ -106,13 +105,12 @@ class Bucket extends TreeNode {
   }
 
   TreeNode _generateTreeNode(ID id) {
-    assert(id != null, 'ID cant be null or empty');
     TreeNode currentNode = this;
     for (var i = id.byteLength - 1; i >= 0; i--) {
       var n = id.getValueAt(i);
       var base = BASE_NUM;
       for (var i = 0; i < 8; i++) {
-        var next;
+        TreeNode? next;
         if (n & base == 0) {
           next = currentNode.right;
           next ??= TreeNode();

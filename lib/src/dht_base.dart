@@ -19,9 +19,9 @@ typedef NewPeerHandler = void Function(CompactAddress address, String hashinfo);
 /// The default bootstrape is `router.bittorrent.com` , `router.utorrent.com` ,`dht.transmissionbt.com`.
 /// Each UDP timeout is 15 seconds, max request process number is 24
 class DHT {
-  KRPC _krpc;
+  KRPC? _krpc;
 
-  Node _root;
+  Node? _root;
 
   final Map<String, Queue<CompactAddress>> _resourceTable =
       <String, Queue<CompactAddress>>{};
@@ -41,15 +41,15 @@ class DHT {
 
   final int _maxPeerNum = 7;
 
-  int _cleanNodeTime;
+  int _cleanNodeTime = 15 * 60;
 
   final _xorToken = Uint8List(4);
 
-  Timer _tokenGenerateTimer;
+  Timer? _tokenGenerateTimer;
 
-  int _port;
+  int? _port;
 
-  int get port => _port;
+  int? get port => _port;
 
   /// Start DHT service
   /// [cleanNodeTime] : default value is 15 minutes(15*60 seconds) , if the node which added , have no any query/response during this time
@@ -63,8 +63,6 @@ class DHT {
       int udpTimeout = TIME_OUT_TIME,
       int maxQeury = 24}) async {
     _cleanNodeTime = cleanNodeTime;
-    assert(_cleanNodeTime != null && udpTimeout != null && maxQeury != null,
-        'incorrect parameters');
     _generateXorToken();
     _tokenGenerateTimer?.cancel();
     _tokenGenerateTimer = Timer.periodic(Duration(minutes: 10), (timer) {
@@ -72,23 +70,25 @@ class DHT {
     });
     var id = ID.randomID();
     _krpc ??= KRPC.newService(id, timeout: udpTimeout, maxQuery: maxQeury);
-    _port = await _krpc.start();
-    _krpc.onError(_fireError);
+    _port = await _krpc?.start();
+    _krpc?.onError(_fireError);
 
-    _krpc.onPong(_processPong);
-    _krpc.onPing(_processPing);
+    _krpc?.onPong(_processPong);
+    _krpc?.onPing(_processPing);
 
-    _krpc.onFindNodeRequest(_processFindNodeRequest);
-    _krpc.onFindNodeResponse(_processFindNodeResponse);
+    _krpc?.onFindNodeRequest(_processFindNodeRequest);
+    _krpc?.onFindNodeResponse(_processFindNodeResponse);
 
-    _krpc.onGetPeersRequest(_processGetPeersRequest);
-    _krpc.onGetPeersReponse(_processGetPeersResponse);
+    _krpc?.onGetPeersRequest(_processGetPeersRequest);
+    _krpc?.onGetPeersReponse(_processGetPeersResponse);
 
-    _krpc.onAnnouncePeerRequest(_processAnnouncePeerRequest);
-    _krpc.onAnnouncePeerResponse((nodeId, address, port, data) {});
-    _root ??=
-        Node(id, CompactAddress(InternetAddress.anyIPv4, _krpc.port), -1, 8);
-    _root.onBucketEmpty(_allFindNode);
+    _krpc?.onAnnouncePeerRequest(_processAnnouncePeerRequest);
+    _krpc?.onAnnouncePeerResponse((nodeId, address, port, data) {});
+    if (_krpc?.port != null) {
+      _root ??= Node(
+          id, CompactAddress(InternetAddress.anyIPv4, _krpc!.port!), -1, 8);
+    }
+    _root?.onBucketEmpty(_allFindNode);
     _defaultBootstrapNodes.forEach((url) {
       addBootstrapNode(url);
     });
@@ -144,10 +144,10 @@ class DHT {
   }
 
   bool _canAdd(ID id) {
-    if (id == _root.id) return false;
-    var node = _root.findNode(id);
+    if (id == _root?.id) return false;
+    var node = _root?.findNode(id);
     if (node == null) {
-      var b = _root.getIDBelongBucket(id);
+      var b = _root?.getIDBelongBucket(id);
       if (b == null || b.isNotFull) {
         return true;
       }
@@ -161,7 +161,7 @@ class DHT {
     if (_canAdd(id)) {
       _tryToGetNode(address, port);
     } else {
-      var node = _root.findNode(id);
+      var node = _root?.findNode(id);
       node?.resetCleanupTimer();
     }
   }
@@ -169,11 +169,11 @@ class DHT {
   void _processPing(List<int> idBytes, String tid, InternetAddress address,
       int port, dynamic data) {
     var id = ID.createID(idBytes, 0, 20);
-    Timer.run(() => _krpc.pong(tid, address, port));
+    Timer.run(() => _krpc?.pong(tid, address, port));
     if (_canAdd(id)) {
       _tryToGetNode(address, port);
     } else {
-      var node = _root.findNode(id);
+      var node = _root?.findNode(id);
       node?.resetCleanupTimer();
     }
   }
@@ -182,12 +182,12 @@ class DHT {
       InternetAddress address, int port, dynamic data) {
     var infoHash = data['info_hash'] as List<int>;
     if (infoHash == null || infoHash.length != 20) {
-      _krpc.error(tid, address, port, 203, 'Bad InfoHash');
+      _krpc?.error(tid, address, port, 203, 'Bad InfoHash');
       return;
     }
     var token = data[TOKEN_KEY];
     if (token == null || token.length != 4 || !_validateToken(token, address)) {
-      _krpc.error(tid, address, port, 203, 'Bad token');
+      _krpc?.error(tid, address, port, 203, 'Bad token');
       return;
     }
     var infoHashStr = String.fromCharCodes(infoHash);
@@ -200,15 +200,15 @@ class DHT {
     } else {
       var peerPort = data['port'];
       if (peerPort == null) {
-        _krpc.error(
+        _krpc?.error(
             tid, address, port, 203, 'invalid arguments - port is null');
         return;
       }
       peer = CompactAddress(address, peerPort);
     }
     if (peer != null) {
-      peers.addLast(peer);
-      if (peers.length > _maxPeerNum) {
+      peers?.addLast(peer);
+      if (peers != null && peers.length > _maxPeerNum) {
         peers.removeFirst();
       }
       _fireFoundNewPeer(peer, infoHashStr);
@@ -220,7 +220,7 @@ class DHT {
     var id = ID.randomID(20);
     var n = index ~/ 8; //相同数字个数
     var offset = index.remainder(8); // 第一个不相同数字的前面多少bit相同
-    var newId = List<int>(20);
+    var newId = List.filled(20, 0);
     var j = 0;
     for (; j < n; j++) {
       newId[j] = id.getValueAt(j);
@@ -251,7 +251,9 @@ class DHT {
     // print('bucket $index 全部清空，查询对应节点 ${nid.toString()}');
     _root?.forEach((node) {
       node.queried = false;
-      _tryToGetNode(node.address, node.port, nid.toString());
+      if (node.address != null && node.port != null) {
+        _tryToGetNode(node.address!, node.port!, nid.toString());
+      }
     });
   }
 
@@ -286,12 +288,12 @@ class DHT {
       // 不放过任何一个机会
       _tryToGetNode(address, port);
     } else {
-      var node = _root.findNode(qid);
+      var node = _root?.findNode(qid);
       node?.resetCleanupTimer();
     }
     var infohash = data['info_hash'] as List<int>;
     if (infohash == null || infohash.length != 20) {
-      _krpc.error(tid, address, port, 203, 'invalid arguments');
+      _krpc?.error(tid, address, port, 203, 'invalid arguments');
       return;
     }
     var nodes = _findClosestNode(infohash);
@@ -300,17 +302,19 @@ class DHT {
     // TODO 这里要区分IPv6和IPv4 !!!!!!!
     var token = String.fromCharCodes(_createToken(address));
     // 这里要返回Peers
-    _krpc.responseGetPeers(tid, infoHashStr, address, port, token,
-        nodes: nodes, peers: peers);
+    if (peers != null) {
+      _krpc?.responseGetPeers(tid, infoHashStr, address, port, token,
+          nodes: nodes, peers: peers);
+    }
   }
 
   void _processGetPeersResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
-    var node = _root.findNode(qid);
+    var node = _root?.findNode(qid);
     if (node == null) return;
     node.resetCleanupTimer();
-    var token;
+    String? token;
     if (data[TOKEN_KEY] != null) {
       token = String.fromCharCodes(data['token']);
     }
@@ -325,14 +329,14 @@ class DHT {
     }
     // 如果没有宣布，就宣布一次
     if (infoHash != null &&
-        (node.announced[infoHash] == null || !node.announced[infoHash]) &&
+        (node.announced[infoHash] == null || !node.announced[infoHash]!) &&
         token != null) {
       node.token[infoHash] = token;
       var peerPort = _announceTable[infoHash];
       if (peerPort != null) {
         node.announced[infoHash] = true;
         // print('公告Peer:端口 $peerPort ,hash:$infoHash');
-        _krpc.announcePeer(infoHash, peerPort, token, address, port);
+        _krpc?.announcePeer(infoHash, peerPort, token, address, port);
       }
     }
     if (data[NODES_KEY] != null) {
@@ -372,16 +376,16 @@ class DHT {
       // 不放过任何一个机会
       _tryToGetNode(address, port);
     } else {
-      var node = _root.findNode(qid);
+      var node = _root?.findNode(qid);
       node?.resetCleanupTimer();
     }
     var target = data[TARGET_KEY];
     if (target == null || target.length != 20) {
-      _krpc.error(tid, address, port, 203, 'invalid arguments');
+      _krpc?.error(tid, address, port, 203, 'invalid arguments');
       return;
     }
     var nodes = _findClosestNode(target);
-    _krpc.responseFindNode(tid, nodes, address, port);
+    _krpc?.responseFindNode(tid, nodes, address, port);
   }
 
   /// `response: {"id" : "<queried nodes id>", "nodes" : "<compact node info>"}`
@@ -389,8 +393,8 @@ class DHT {
   void _processFindNodeResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
-    if (qid == _root.id) return;
-    var node = _root.findNode(qid);
+    if (qid == _root?.id) return;
+    var node = _root?.findNode(qid);
     node?.resetCleanupTimer();
     if (node != null && node.queried) {
       // 如果节点已经在本地网络中并且findnode过，就不再会对获得的nodes进行处理
@@ -398,16 +402,17 @@ class DHT {
     }
     node ??= Node(qid, CompactAddress(address, port), _cleanNodeTime);
     node.queried = true;
-    if (_root.add(node)) {
+    if (_root != null && _root!.add(node)) {
       if (_announceTable.keys.isNotEmpty) {
         // 新加入节点去请求peers
         _announceTable.keys.forEach((infoHash) {
-          _requestGetPeers(node, infoHash);
+          _requestGetPeers(node!, infoHash);
         });
       }
     }
+
+    if (data[NODES_KEY] == null) return;
     var nodes = data[NODES_KEY] as List<int>;
-    if (nodes == null) return;
     for (var i = 0; i < nodes.length; i += 26) {
       try {
         var id = ID.createID(nodes, i, 20);
@@ -426,31 +431,35 @@ class DHT {
 
   List<Node> _findClosestNode(List<int> idBytes) {
     var id = ID.createID(idBytes, 0, 20);
-    var node = _root.findNode(id);
-    var nodes;
+    var node = _root?.findNode(id);
+    List<Node>? nodes;
     if (node == null) {
-      nodes = _root.findClosestNodes(id);
+      nodes = _root?.findClosestNodes(id);
     } else {
       nodes = <Node>[node];
     }
-    return nodes;
+    return nodes!;
   }
 
   void _requestGetPeers(Node node, String infoHash) {
-    if (node.announced[infoHash] != null && node.announced[infoHash]) {
+    if (node.announced[infoHash] != null && node.announced[infoHash]!) {
       return;
     }
-    Timer.run(() => _krpc.getPeers(infoHash, node.address, node.port));
+    Timer.run(() {
+      if (node.address != null && node.port != null) {
+        _krpc?.getPeers(infoHash, node.address!, node.port!);
+      }
+    });
   }
 
-  void _tryToGetNode(InternetAddress address, int port, [String id]) {
+  void _tryToGetNode(InternetAddress address, int port, [String? id]) {
     if (id == null) {
       if (_root != null) {
-        id = _root.id.toString();
+        id = _root?.id.toString();
       }
     }
     if (id != null) {
-      Timer.run(() => _krpc.findNode(id, address, port));
+      Timer.run(() => _krpc?.findNode(id!, address, port));
     }
   }
 
@@ -463,25 +472,26 @@ class DHT {
   /// this `infohash` to other nodes , before `announce_peer`, DHT will request `get_peers`
   /// first to get the `token`
   void announce(String infohash, int port) {
-    assert(
-        infohash != null && infohash.length == 20, 'Incorrect infohash string');
-    assert(port != null && port <= 65535 && port >= 0, 'Incorrect port');
+    assert(infohash.length == 20, 'Incorrect infohash string');
+    assert(port <= 65535 && port >= 0, 'Incorrect port');
     _announceTable[infohash] = port;
     _root?.forEach((node) {
-      if (node.announced[infohash] != null && node.announced[infohash]) return;
+      if (node.announced[infohash] != null && node.announced[infohash]!) return;
       var token = node.token[infohash];
       if (token == null) {
         // 还未获取token：
         _requestGetPeers(node, infohash);
       } else {
         node.announced[infohash] = true;
-        _krpc.announcePeer(infohash, port, token, node.address, node.port);
+        if (node.address != null && node.port != null) {
+          _krpc?.announcePeer(infohash, port, token, node.address!, node.port!);
+        }
       }
     });
   }
 
   void requestPeers(String infohash) {
-    _root.forEach((node) {
+    _root?.forEach((node) {
       _requestGetPeers(node, infohash);
     });
   }

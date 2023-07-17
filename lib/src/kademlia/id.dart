@@ -6,13 +6,13 @@ const BASE_NUM = 128;
 
 /// A ID with any length bytes array
 class ID {
-  List<int> _ids;
+  late List<int> _ids;
 
-  String _str;
+  String? _str;
 
   /// [byteLength] is the bytes size , default is 20
   ID([int byteLength = 20]) {
-    _ids = List<int>(byteLength);
+    _ids = List.filled(byteLength, 0);
   }
 
   int get byteLength => _ids.length;
@@ -43,7 +43,7 @@ class ID {
   /// XOR another ID to get a `Distance` instance.
   Distance distanceBetween(ID id) {
     if (id.byteLength != byteLength) throw 'ID Different Length';
-    var ids = List<int>(_ids.length);
+    var ids = List.filled(_ids.length, 0);
     for (var i = 0; i < _ids.length; i++) {
       ids[i] = id.getValueAt(i) ^ _ids[i];
     }
@@ -73,7 +73,7 @@ class ID {
     return lrp;
   }
 
-  static ID createID(List<int> values, [int offset = 0, int length]) {
+  static ID createID(List<int> values, [int offset = 0, int? length]) {
     length ??= values.length;
     var id = ID(length);
     id.setValue(values, offset);
@@ -92,7 +92,7 @@ class ID {
   @override
   String toString() {
     _str ??= String.fromCharCodes(_ids);
-    return _str;
+    return _str!;
   }
 
   @override

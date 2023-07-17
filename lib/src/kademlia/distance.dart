@@ -1,7 +1,7 @@
 class Distance {
   final List<int> _values;
 
-  String _str;
+  String? _str;
 
   int get byteLength => _values.length;
 
@@ -14,7 +14,7 @@ class Distance {
   @override
   String toString() {
     _str ??= String.fromCharCodes(_values);
-    return _str;
+    return _str!;
   }
 
   @override

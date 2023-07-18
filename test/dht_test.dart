@@ -18,8 +18,9 @@ void main() {
         var l = index + 1;
         index = 159 - index;
         var id = ID.randomID(20);
-        var n = index ~/ 8; //相同数字个数
-        var offset = index.remainder(8); // 第一个不相同数字的前面多少bit相同
+        var n = index ~/ 8; //Number of identical digits
+        var offset = index.remainder(
+            8); // How many bits are the same before the first differing digit
         var newId = List.filled(20, 0);
         var j = 0;
         for (; j < n; j++) {

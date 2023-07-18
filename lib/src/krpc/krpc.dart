@@ -344,7 +344,7 @@ class _KRPC implements KRPC {
     _queryController ??= StreamController();
     _querySub ??= _queryController?.stream.listen(_processQueryRequest);
     // _totalPending++;
-    // print('目前共有 $_totalPending 个请求');
+    // print('There are currently $_totalPending pending requests.');
     _queryController?.add({
       'message': message,
       'address': address,
@@ -360,7 +360,7 @@ class _KRPC implements KRPC {
     var address = event['address'] as InternetAddress;
     var port = event['port'] as int;
     var tid = event['transacationId'] as String;
-    // print('发送请求 $tid,目前pending请求数：$_pendingQuery');
+    // print('Sending request $tid, currently pending requests: $_pendingQuery."');
     _timeoutMap[tid] =
         Timer(Duration(seconds: _timeOutTime), () => _fireTimeout(tid));
     _socket?.send(message, address, port);
@@ -379,7 +379,7 @@ class _KRPC implements KRPC {
     var event = _cleanTransaction(id);
     if (event != null) {
       _reducePendingQuery();
-      // print('请求超时 $id,目前pending请求数：$_pendingQuery');
+      // print('Request timed out for $id, currently pending requests: $_pendingQuery.');
     }
   }
 
@@ -446,7 +446,7 @@ class _KRPC implements KRPC {
     _reducePendingQuery();
 
     // _totalPending--;
-    // print('目前共有 $_totalPending 个请求');
+    // print('There are currently $_totalPending requests.');
     dynamic data;
     try {
       data = decode(bufferData);
@@ -463,9 +463,9 @@ class _KRPC implements KRPC {
     try {
       tid = String.fromCharCodes(data[TRANSACTION_KEY], 0, 2);
     } catch (e) {
-      log('解析Tid出错', error: e, name: runtimeType.toString());
-    } //不就知道为什么有些Tid是4个字节的
-    // print('请求响应 $tid ,目前pending请求数：$_pendingQuery');
+      log('"Error parsing Tid', error: e, name: runtimeType.toString());
+    } //Error parsing Tid.
+    // print('Request response for $tid, currently pending requests: $_pendingQuery.');
     if (tid == null || tid.length != 2) {
       _fireError(
           Protocal_Error, null, 'Incorret Transaction ID', address, port);
@@ -477,7 +477,7 @@ class _KRPC implements KRPC {
     try {
       method = String.fromCharCodes(data[METHOD_KEY], 0, 1);
     } catch (e) {
-      log('解析Method出错', error: e, name: runtimeType.toString());
+      log('Error parsing Method', error: e, name: runtimeType.toString());
     }
     if (method == RESPONSE_KEY && data[RESPONSE_KEY] != null) {
       var idBytes = data[RESPONSE_KEY][ID_KEY];
@@ -489,7 +489,7 @@ class _KRPC implements KRPC {
       if (additionalValues != null && r != null) {
         r['__additional'] = additionalValues;
       }
-      // 处理远程发送的response
+      // Processing the response sent by the remote
       _fireResponse(event, idBytes, address, port, r);
       return;
     }
@@ -520,7 +520,7 @@ class _KRPC implements KRPC {
       if (queryKey == ANNOUNCE_PEER) {
         event = EVENT.ANNOUNCE_PEER;
       }
-      log('收到一个Query请求: $event  ， 来自 $address : $port');
+      log('Received a Query request: $event, from $address : $port');
       var arguments = data[ARGUMENTS_KEY];
       if (event != null) {
         _fireQuery(event, idBytes, tid, address, port, arguments);
@@ -543,7 +543,7 @@ class _KRPC implements KRPC {
 
   void _getError(
       String tid, InternetAddress address, int port, int code, String msg) {
-    log('从 ${address.address}:$port 得到一个错误消息:',
+    log('Received an error message from ${address.address}:$port :',
         error: '[$code]$msg', name: runtimeType.toString());
     for (var element in _errorHandlers) {
       Timer.run(() => element(address, port, code, msg));

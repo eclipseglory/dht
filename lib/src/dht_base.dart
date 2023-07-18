@@ -217,8 +217,9 @@ class DHT {
   void _allFindNode(int index) {
     index = 159 - index;
     var id = ID.randomID(20);
-    var n = index ~/ 8; //相同数字个数
-    var offset = index.remainder(8); // 第一个不相同数字的前面多少bit相同
+    var n = index ~/ 8; //Number of identical digits
+    var offset = index.remainder(
+        8); // How many bits are the same before the first differing digit
     var newId = List.filled(20, 0);
     var j = 0;
     for (; j < n; j++) {
@@ -247,7 +248,7 @@ class DHT {
       newId[i] = r.nextInt(256);
     }
     var nid = ID.createID(newId);
-    // print('bucket $index 全部清空，查询对应节点 ${nid.toString()}');
+    // print('bucket $index Clear all and query the corresponding node ${nid.toString()}');
     _root?.forEach((node) {
       node.queried = false;
       if (node.address != null && node.port != null) {
@@ -284,7 +285,7 @@ class DHT {
       InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
     if (_canAdd(qid)) {
-      // 不放过任何一个机会
+      // Don't miss any opportunity
       _tryToGetNode(address, port);
     } else {
       var node = _root?.findNode(qid);
@@ -298,9 +299,9 @@ class DHT {
     var nodes = _findClosestNode(infohash);
     var infoHashStr = String.fromCharCodes(infohash);
     var peers = _resourceTable[infoHashStr];
-    // TODO 这里要区分IPv6和IPv4 !!!!!!!
+    // TODO Distinguish between IPv6 and IPv4 !!!!!!!
     var token = String.fromCharCodes(_createToken(address));
-    // 这里要返回Peers
+    // Return peers
     if (peers != null) {
       _krpc?.responseGetPeers(tid, infoHashStr, address, port, token,
           nodes: nodes, peers: peers);
@@ -326,7 +327,7 @@ class DHT {
       log('Inner Error',
           error: 'InfoHash didn\'t record', name: runtimeType.toString());
     }
-    // 如果没有宣布，就宣布一次
+    // If not announced, then announce once
     if (infoHash != null &&
         (node.announced[infoHash] == null || !node.announced[infoHash]!) &&
         token != null) {
@@ -334,7 +335,7 @@ class DHT {
       var peerPort = _announceTable[infoHash];
       if (peerPort != null) {
         node.announced[infoHash] = true;
-        // print('公告Peer:端口 $peerPort ,hash:$infoHash');
+        // print('Announce Peer:Port $peerPort ,hash:$infoHash');
         _krpc?.announcePeer(infoHash, peerPort, token, address, port);
       }
     }
@@ -372,7 +373,7 @@ class DHT {
       InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
     if (_canAdd(qid)) {
-      // 不放过任何一个机会
+      // Don't miss any opportunity
       _tryToGetNode(address, port);
     } else {
       var node = _root?.findNode(qid);
@@ -388,7 +389,7 @@ class DHT {
   }
 
   /// `response: {"id" : "<queried nodes id>", "nodes" : "<compact node info>"}`
-  /// 没个node是26个字节，前20个是ID，后面6个是IP和端口
+  /// Each node is 26 bytes, with the first 20 bytes being the ID, and the remaining 6 bytes being the IP and port.
   void _processFindNodeResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
@@ -396,14 +397,15 @@ class DHT {
     var node = _root?.findNode(qid);
     node?.resetCleanupTimer();
     if (node != null && node.queried) {
-      // 如果节点已经在本地网络中并且findnode过，就不再会对获得的nodes进行处理
+      // If a node is already present in the local network and has been
+      // 'findnode'ed before, it will no longer be processed for the obtained nodes.
       return;
     }
     node ??= Node(qid, CompactAddress(address, port), _cleanNodeTime);
     node.queried = true;
     if (_root != null && _root!.add(node)) {
       if (_announceTable.keys.isNotEmpty) {
-        // 新加入节点去请求peers
+        // Request peers from the newly added node
         for (var infoHash in _announceTable.keys) {
           _requestGetPeers(node, infoHash);
         }
@@ -478,7 +480,7 @@ class DHT {
       if (node.announced[infohash] != null && node.announced[infohash]!) return;
       var token = node.token[infohash];
       if (token == null) {
-        // 还未获取token：
+        // Token not obtained yet.
         _requestGetPeers(node, infohash);
       } else {
         node.announced[infohash] = true;

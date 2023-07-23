@@ -58,7 +58,7 @@ class DHT {
   /// [udpTimeout] : Each query timeout time, default is 15 seconds
   /// [maxQeury] : the max number of the queries processing (`queries_number`). if `queries_number` reach this number , DHT won't
   /// send any request to remote until the old request was reponse or timeout to reduce the `queries_number`.
-  Future bootstrap(
+  Future<int?> bootstrap(
       {int cleanNodeTime = 15 * 60,
       int udpTimeout = TIME_OUT_TIME,
       int maxQeury = 24}) async {
@@ -124,6 +124,8 @@ class DHT {
   }
 
   void _fireError(InternetAddress address, int port, int code, String msg) {
+    log('Got Error from $address:$port',
+        error: msg, name: runtimeType.toString());
     for (var handler in _errorHandler) {
       Timer.run(() => handler(code, msg));
     }
@@ -169,6 +171,8 @@ class DHT {
   void _processPing(List<int> idBytes, String tid, InternetAddress address,
       int port, dynamic data) {
     var id = ID.createID(idBytes, 0, 20);
+    log('Got ping from $address:$port id:${Uint8List.fromList(id.ids).toHexString()}',
+        name: runtimeType.toString());
     Timer.run(() => _krpc?.pong(tid, address, port));
     if (_canAdd(id)) {
       _tryToGetNode(address, port);
@@ -180,6 +184,8 @@ class DHT {
 
   void _processAnnouncePeerRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
+    log('Got announce peer request from $address:$port ',
+        name: runtimeType.toString());
     var infoHash = data['info_hash'] as List<int>;
     if (infoHash.length != 20) {
       _krpc?.error(tid, address, port, 203, 'Bad InfoHash');
@@ -284,6 +290,8 @@ class DHT {
   void _processGetPeersRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
+    log('Got get peers request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+        name: runtimeType.toString());
     if (_canAdd(qid)) {
       // Don't miss any opportunity
       _tryToGetNode(address, port);
@@ -311,6 +319,10 @@ class DHT {
   void _processGetPeersResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
+    log(
+      'Got get peers response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+      name: runtimeType.toString(),
+    );
     var node = _root?.findNode(qid);
     if (node == null) return;
     node.resetCleanupTimer();
@@ -372,6 +384,8 @@ class DHT {
   void _processFindNodeRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
+    log('Got find node request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+        name: runtimeType.toString());
     if (_canAdd(qid)) {
       // Don't miss any opportunity
       _tryToGetNode(address, port);
@@ -393,6 +407,8 @@ class DHT {
   void _processFindNodeResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
+    log('Got find node response fromm $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+        name: runtimeType.toString());
     if (qid == _root?.id) return;
     var node = _root?.findNode(qid);
     node?.resetCleanupTimer();
@@ -443,6 +459,8 @@ class DHT {
   }
 
   void _requestGetPeers(Node node, String infoHash) {
+    log('requesting peers for infohash ${Uint8List.fromList(infoHash.runes.toList()).toHexString()} from node ${Uint8List.fromList(node.id.ids).toHexString()}',
+        name: runtimeType.toString());
     if (node.announced[infoHash] != null && node.announced[infoHash]!) {
       return;
     }

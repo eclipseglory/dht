@@ -7,6 +7,7 @@ const BASE_NUM = 128;
 /// A ID with any length bytes array
 class ID {
   late List<int> _ids;
+  List<int> get ids => _ids;
 
   String? _str;
 

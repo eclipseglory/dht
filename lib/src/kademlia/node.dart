@@ -159,7 +159,6 @@ class Node {
     var buckets = this.buckets;
     for (var i = 0; i < buckets.length; i++) {
       var b = buckets[i];
-      if (b == null) continue;
       var l = b.nodes.length;
       for (var i = 0; i < l; i++) {
         var node = b.nodes[i];

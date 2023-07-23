@@ -147,7 +147,7 @@ class _KRPC implements KRPC {
 
   final Map<String, EVENT> _transactionsMap = <String, EVENT>{};
 
-  final Map<String, dynamic> _transactionsValues = <String, dynamic>{};
+  final Map<String, String?> _transactionsValues = <String, String?>{};
 
   final Map<String, Timer> _timeoutMap = <String, Timer>{};
 

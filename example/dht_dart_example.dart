@@ -21,9 +21,9 @@ void main() async {
   });
 
   await dht.bootstrap(udpTimeout: 5, cleanNodeTime: 5 * 60);
-  torrent.nodes.forEach((url) async {
-    dht.addBootstrapNode(url);
-  });
+  for (var url in torrent.nodes) {
+    await dht.addBootstrapNode(url);
+  }
 
   Future.delayed(Duration(seconds: 10), () {
     dht.stop();

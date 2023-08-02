@@ -45,7 +45,7 @@ abstract class KRPC {
   bool get isStopped;
 
   /// UDP port
-  int get port;
+  int? get port;
 
   /// Code	Description
   /// - `201`	Generic Error
@@ -143,11 +143,11 @@ class _KRPC implements KRPC {
 
   final int _timeOutTime;
 
-  RawDatagramSocket _socket;
+  RawDatagramSocket? _socket;
 
   final Map<String, EVENT> _transactionsMap = <String, EVENT>{};
 
-  final Map<String, dynamic> _transactionsValues = <String, dynamic>{};
+  final Map<String, String?> _transactionsValues = <String, String?>{};
 
   final Map<String, Timer> _timeoutMap = <String, Timer>{};
 
@@ -161,9 +161,9 @@ class _KRPC implements KRPC {
 
   final Set<KRPCErrorHandler> _errorHandlers = <KRPCErrorHandler>{};
 
-  StreamController _queryController;
+  StreamController? _queryController;
 
-  StreamSubscription _querySub;
+  StreamSubscription? _querySub;
 
   @override
   void error(String tid, InternetAddress address, int port,
@@ -185,90 +185,90 @@ class _KRPC implements KRPC {
 
   @override
   bool offFindNodeRequest(KRPCQueryHandler handler) {
-    return _queryHandlers[EVENT.FIND_NODE]?.remove(handler);
+    return _queryHandlers[EVENT.FIND_NODE]?.remove(handler) ?? true;
   }
 
   @override
   bool onFindNodeRequest(KRPCQueryHandler handler) {
     _queryHandlers[EVENT.FIND_NODE] ??= <KRPCQueryHandler>{};
-    return _queryHandlers[EVENT.FIND_NODE].add(handler);
+    return _queryHandlers[EVENT.FIND_NODE]!.add(handler);
   }
 
   @override
   bool offFindNodeResponse(KRPCResponseHandler handler) {
-    return _responseHandlers[EVENT.FIND_NODE]?.remove(handler);
+    return _responseHandlers[EVENT.FIND_NODE]?.remove(handler) ?? true;
   }
 
   @override
   bool onFindNodeResponse(KRPCResponseHandler handler) {
     _responseHandlers[EVENT.FIND_NODE] ??= <KRPCResponseHandler>{};
-    return _responseHandlers[EVENT.FIND_NODE].add(handler);
+    return _responseHandlers[EVENT.FIND_NODE]!.add(handler);
   }
 
   @override
   bool onPong(KRPCResponseHandler handler) {
     _responseHandlers[EVENT.PING] ??= <KRPCResponseHandler>{};
-    return _responseHandlers[EVENT.PING].add(handler);
+    return _responseHandlers[EVENT.PING]!.add(handler);
   }
 
   @override
   bool offPong(KRPCResponseHandler handler) {
-    return _responseHandlers[EVENT.PING]?.remove(handler);
+    return _responseHandlers[EVENT.PING]?.remove(handler) ?? true;
   }
 
   @override
   bool onPing(KRPCQueryHandler handler) {
     _queryHandlers[EVENT.PING] ??= <KRPCQueryHandler>{};
-    return _queryHandlers[EVENT.PING].add(handler);
+    return _queryHandlers[EVENT.PING]!.add(handler);
   }
 
   @override
   bool offPing(KRPCQueryHandler handler) {
-    return _queryHandlers[EVENT.PING]?.remove(handler);
+    return _queryHandlers[EVENT.PING]?.remove(handler) ?? true;
   }
 
   @override
   bool onGetPeersRequest(KRPCQueryHandler handler) {
     _queryHandlers[EVENT.GET_PEERS] ??= <KRPCQueryHandler>{};
-    return _queryHandlers[EVENT.GET_PEERS].add(handler);
+    return _queryHandlers[EVENT.GET_PEERS]!.add(handler);
   }
 
   @override
   bool offGetPeersRequest(KRPCQueryHandler handler) {
-    return _queryHandlers[EVENT.GET_PEERS]?.remove(handler);
+    return _queryHandlers[EVENT.GET_PEERS]?.remove(handler) ?? true;
   }
 
   @override
   bool offGetPeersResponse(KRPCResponseHandler handler) {
-    return _responseHandlers[EVENT.GET_PEERS]?.remove(handler);
+    return _responseHandlers[EVENT.GET_PEERS]?.remove(handler) ?? true;
   }
 
   @override
   bool onGetPeersReponse(KRPCResponseHandler handler) {
     _responseHandlers[EVENT.GET_PEERS] ??= <KRPCResponseHandler>{};
-    return _responseHandlers[EVENT.GET_PEERS].add(handler);
+    return _responseHandlers[EVENT.GET_PEERS]!.add(handler);
   }
 
   @override
   bool offAnnouncePeerRequest(KRPCQueryHandler handler) {
-    return _queryHandlers[EVENT.ANNOUNCE_PEER]?.remove(handler);
+    return _queryHandlers[EVENT.ANNOUNCE_PEER]?.remove(handler) ?? true;
   }
 
   @override
   bool offAnnouncePeerResponse(KRPCResponseHandler handler) {
-    return _responseHandlers[EVENT.ANNOUNCE_PEER]?.remove(handler);
+    return _responseHandlers[EVENT.ANNOUNCE_PEER]?.remove(handler) ?? true;
   }
 
   @override
   bool onAnnouncePeerRequest(KRPCQueryHandler handler) {
     _queryHandlers[EVENT.ANNOUNCE_PEER] ??= <KRPCQueryHandler>{};
-    return _queryHandlers[EVENT.ANNOUNCE_PEER].add(handler);
+    return _queryHandlers[EVENT.ANNOUNCE_PEER]!.add(handler);
   }
 
   @override
   bool onAnnouncePeerResponse(KRPCResponseHandler handler) {
     _responseHandlers[EVENT.ANNOUNCE_PEER] ??= <KRPCResponseHandler>{};
-    return _responseHandlers[EVENT.ANNOUNCE_PEER].add(handler);
+    return _responseHandlers[EVENT.ANNOUNCE_PEER]!.add(handler);
   }
 
   @override
@@ -307,7 +307,7 @@ class _KRPC implements KRPC {
   @override
   void responseGetPeers(String tid, String infoHash, InternetAddress address,
       int port, String token,
-      {Iterable<Node> nodes, Iterable<CompactAddress> peers}) {
+      {Iterable<Node>? nodes, Iterable<CompactAddress>? peers}) {
     if (isStopped || _socket == null) return;
     var message = getPeersResponse(tid, _nodeId.toString(), token,
         nodes: nodes, peers: peers);
@@ -342,9 +342,9 @@ class _KRPC implements KRPC {
   void _requestQuery(String transacationId, List<int> message,
       InternetAddress address, int port) {
     _queryController ??= StreamController();
-    _querySub ??= _queryController.stream.listen(_processQueryRequest);
+    _querySub ??= _queryController?.stream.listen(_processQueryRequest);
     // _totalPending++;
-    // print('目前共有 $_totalPending 个请求');
+    // print('There are currently $_totalPending pending requests.');
     _queryController?.add({
       'message': message,
       'address': address,
@@ -360,7 +360,7 @@ class _KRPC implements KRPC {
     var address = event['address'] as InternetAddress;
     var port = event['port'] as int;
     var tid = event['transacationId'] as String;
-    // print('发送请求 $tid,目前pending请求数：$_pendingQuery');
+    // print('Sending request $tid, currently pending requests: $_pendingQuery."');
     _timeoutMap[tid] =
         Timer(Duration(seconds: _timeOutTime), () => _fireTimeout(tid));
     _socket?.send(message, address, port);
@@ -379,11 +379,11 @@ class _KRPC implements KRPC {
     var event = _cleanTransaction(id);
     if (event != null) {
       _reducePendingQuery();
-      // print('请求超时 $id,目前pending请求数：$_pendingQuery');
+      // print('Request timed out for $id, currently pending requests: $_pendingQuery.');
     }
   }
 
-  EVENT _cleanTransaction(String id) {
+  EVENT? _cleanTransaction(String id) {
     var event = _transactionsMap.remove(id);
     _timeoutMap[id]?.cancel();
     _timeoutMap.remove(id);
@@ -402,14 +402,17 @@ class _KRPC implements KRPC {
   }
 
   @override
-  Future start() async {
+  Future<int?> start() async {
     _socket ??= await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-    _socket.listen((event) {
+    _socket?.listen((event) {
       if (event == RawSocketEvent.read) {
-        var datagram = _socket.receive();
+        var datagram = _socket?.receive();
         Timer.run(() {
           try {
-            _processReceiveData(datagram.address, datagram.port, datagram.data);
+            if (datagram != null) {
+              _processReceiveData(
+                  datagram.address, datagram.port, datagram.data);
+            }
           } catch (e) {
             log('Process Receive Message Error',
                 error: e, name: runtimeType.toString());
@@ -419,12 +422,12 @@ class _KRPC implements KRPC {
     },
         onDone: () => stop('Remote/Local close the socket'),
         onError: (e) => stop(e));
-    return _socket.port;
+    return _socket?.port;
   }
 
   void _reducePendingQuery() {
     _pendingQuery -= 1;
-    if (_pendingQuery < _maxQuery && _querySub != null && _querySub.isPaused) {
+    if (_pendingQuery < _maxQuery && _querySub != null && _querySub!.isPaused) {
       _querySub?.resume();
     }
   }
@@ -433,18 +436,18 @@ class _KRPC implements KRPC {
     _pendingQuery += 1;
     if (_pendingQuery >= _maxQuery &&
         _querySub != null &&
-        !_querySub.isPaused) {
+        !_querySub!.isPaused) {
       _querySub?.pause();
     }
   }
 
   void _processReceiveData(
-      InternetAddress address, int port, List<int> bufferData) {
+      InternetAddress address, int port, Uint8List bufferData) {
     _reducePendingQuery();
 
     // _totalPending--;
-    // print('目前共有 $_totalPending 个请求');
-    var data;
+    // print('There are currently $_totalPending requests.');
+    dynamic data;
     try {
       data = decode(bufferData);
     } catch (e) {
@@ -456,13 +459,13 @@ class _KRPC implements KRPC {
           Protocal_Error, null, 'Data Don\'t Contains y or t', address, port);
       return;
     }
-    var tid;
+    String? tid;
     try {
       tid = String.fromCharCodes(data[TRANSACTION_KEY], 0, 2);
     } catch (e) {
-      log('解析Tid出错', error: e, name: runtimeType.toString());
-    } //不就知道为什么有些Tid是4个字节的
-    // print('请求响应 $tid ,目前pending请求数：$_pendingQuery');
+      log('"Error parsing Tid', error: e, name: runtimeType.toString());
+    } //Error parsing Tid.
+    // print('Request response for $tid, currently pending requests: $_pendingQuery.');
     if (tid == null || tid.length != 2) {
       _fireError(
           Protocal_Error, null, 'Incorret Transaction ID', address, port);
@@ -470,11 +473,11 @@ class _KRPC implements KRPC {
     }
     var additionalValues = _transactionsValues[tid];
     var event = _cleanTransaction(tid);
-    var method;
+    String? method;
     try {
       method = String.fromCharCodes(data[METHOD_KEY], 0, 1);
     } catch (e) {
-      log('解析Method出错', error: e, name: runtimeType.toString());
+      log('Error parsing Method', error: e, name: runtimeType.toString());
     }
     if (method == RESPONSE_KEY && data[RESPONSE_KEY] != null) {
       var idBytes = data[RESPONSE_KEY][ID_KEY];
@@ -486,7 +489,7 @@ class _KRPC implements KRPC {
       if (additionalValues != null && r != null) {
         r['__additional'] = additionalValues;
       }
-      // 处理远程发送的response
+      // Processing the response sent by the remote
       _fireResponse(event, idBytes, address, port, r);
       return;
     }
@@ -504,7 +507,7 @@ class _KRPC implements KRPC {
         _fireError(Protocal_Error, tid, 'Incorrect Node ID', address, port);
         return;
       }
-      EVENT event;
+      EVENT? event;
       if (queryKey == PING) {
         event = EVENT.PING;
       }
@@ -517,9 +520,11 @@ class _KRPC implements KRPC {
       if (queryKey == ANNOUNCE_PEER) {
         event = EVENT.ANNOUNCE_PEER;
       }
-      log('收到一个Query请求: $event  ， 来自 $address : $port');
+      log('Received a Query request: $event, from $address : $port');
       var arguments = data[ARGUMENTS_KEY];
-      _fireQuery(event, idBytes, tid, address, port, arguments);
+      if (event != null) {
+        _fireQuery(event, idBytes, tid, address, port, arguments);
+      }
       return;
     }
     if (method == ERROR_KEY) {
@@ -538,11 +543,11 @@ class _KRPC implements KRPC {
 
   void _getError(
       String tid, InternetAddress address, int port, int code, String msg) {
-    log('从 ${address.address}:$port 得到一个错误消息:',
+    log('Received an error message from ${address.address}:$port :',
         error: '[$code]$msg', name: runtimeType.toString());
-    _errorHandlers.forEach((element) {
+    for (var element in _errorHandlers) {
       Timer.run(() => element(address, port, code, msg));
-    });
+    }
   }
 
   /// Code	Description
@@ -551,7 +556,7 @@ class _KRPC implements KRPC {
   /// - `203`	Protocol Error, such as a malformed packet, invalid arguments, or bad token
   /// - `204`	Method Unknown
   void _fireError(
-      int code, String tid, String msg, InternetAddress address, int port) {
+      int code, String? tid, String msg, InternetAddress address, int port) {
     if (tid != null) {
       _transactionsMap.remove(tid);
       _timeoutMap[tid]?.cancel();
@@ -562,7 +567,7 @@ class _KRPC implements KRPC {
     }
   }
 
-  void _fireResponse(EVENT event, List<int> nodeIdBytes,
+  void _fireResponse(EVENT? event, List<int> nodeIdBytes,
       InternetAddress address, int port, dynamic response) {
     var handlers = _responseHandlers[event];
     handlers?.forEach((handle) {
@@ -597,7 +602,7 @@ class _KRPC implements KRPC {
     _transactionsMap.clear();
     _transactionsValues.clear();
     _timeoutMap.forEach((key, timer) {
-      timer?.cancel();
+      timer.cancel();
     });
     _timeoutMap.clear();
     try {
@@ -619,5 +624,5 @@ class _KRPC implements KRPC {
   ID get nodeId => _nodeId;
 
   @override
-  int get port => _socket?.port;
+  int? get port => _socket?.port;
 }

@@ -1,7 +1,7 @@
 class Distance {
   final List<int> _values;
 
-  String _str;
+  String? _str;
 
   int get byteLength => _values.length;
 
@@ -14,18 +14,18 @@ class Distance {
   @override
   String toString() {
     _str ??= String.fromCharCodes(_values);
-    return _str;
+    return _str!;
   }
 
   @override
   int get hashCode => toString().hashCode;
 
   @override
-  bool operator ==(a) {
-    if (a is Distance) {
-      if (a.byteLength == byteLength) {
+  bool operator ==(other) {
+    if (other is Distance) {
+      if (other.byteLength == byteLength) {
         for (var i = 0; i < byteLength; i++) {
-          if (getValue(i) != a.getValue(i)) return false;
+          if (getValue(i) != other.getValue(i)) return false;
         }
         return true;
       }

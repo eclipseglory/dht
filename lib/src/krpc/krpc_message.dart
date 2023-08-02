@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bencode_dart/bencode_dart.dart' as bencoder;
 import 'package:dartorrent_common/dartorrent_common.dart';
 
@@ -44,7 +46,7 @@ const QUERY_KEYS = [PING, FIND_NODE, GET_PEERS];
 
 /// [transactionId] should be encoded as a short string of binary numbers, typically
 ///  2 characters are enough as they cover 2^16 outstanding queries.
-List<int> queryMessage(String transactionId, String method, Map arguments) {
+Uint8List queryMessage(String transactionId, String method, Map arguments) {
   assert(transactionId.length == 2, 'Transaction ID length should be 2');
   var message = {
     TRANSACTION_KEY: transactionId,
@@ -55,7 +57,7 @@ List<int> queryMessage(String transactionId, String method, Map arguments) {
   return bencoder.encode(message);
 }
 
-List<int> responseMessage(String transactionId, Map response) {
+Uint8List responseMessage(String transactionId, Map response) {
   var message = {
     TRANSACTION_KEY: transactionId,
     METHOD_KEY: RESPONSE_KEY,
@@ -79,17 +81,17 @@ List<int> errorMessage(String transactionId, int code, String errorMsg) {
 ///  arguments:  `{"id" : "<querying nodes id>"}`
 ///
 /// [nodeId] is 20 length string,[transactionId] is 2 length string
-List<int> pingMessage(String transactionId, String nodeId) {
+Uint8List pingMessage(String transactionId, String nodeId) {
   return queryMessage(transactionId, PING, {ID_KEY: nodeId});
 }
 
 /// `response: {"id" : "<queried nodes id>"}`
-List<int> pongMessage(String transactionId, String nodeId) {
+Uint8List pongMessage(String transactionId, String nodeId) {
   return responseMessage(transactionId, {ID_KEY: nodeId});
 }
 
 /// `arguments:  {"id" : "<querying nodes id>", "target" : "<id of target node>"}`
-List<int> findNodeMessage(
+Uint8List findNodeMessage(
     String transactionId, String nodeId, String targetId) {
   return queryMessage(
       transactionId, FIND_NODE, {ID_KEY: nodeId, TARGET_KEY: targetId});
@@ -100,36 +102,36 @@ List<int> findNodeMessage(
 /// Contact information for nodes is encoded as a 26-byte string.
 /// Also known as "Compact node info" the 20-byte Node ID in network byte order
 /// has the compact IP-address/port info concatenated to the end.
-List<int> findNodeResponse(
+Uint8List findNodeResponse(
     String transactionId, String nodeId, Iterable<Node> nodes) {
   var nodesStr = nodes.fold('', (previousValue, node) {
-    return '${previousValue}${node.toContactEncodingString()}';
+    return '$previousValue${node.toContactEncodingString()}';
   });
   return responseMessage(transactionId, {ID_KEY: nodeId, NODES_KEY: nodesStr});
 }
 
 /// `arguments:  {"id" : "<querying nodes id>", "info_hash" : "<20-byte infohash of target torrent>"}`
-List<int> getPeersMessage(
+Uint8List getPeersMessage(
     String transactionId, String nodeId, String infoHash) {
   return queryMessage(
       transactionId, GET_PEERS, {ID_KEY: nodeId, INFO_HASH_KEY: infoHash});
 }
 
 /// response : `{"id" : "<queried nodes id>", "token" :"<opaque write token>", "values" : ["<peer 1 info string>", "<peer 2 info string>"],"nodes" : "<compact node info>"}`
-List<int> getPeersResponse(String transactionId, String nodeId, String token,
-    {Iterable<Node> nodes, Iterable<CompactAddress> peers}) {
-  var nodesStr;
+Uint8List getPeersResponse(String transactionId, String nodeId, String token,
+    {Iterable<Node>? nodes, Iterable<CompactAddress>? peers}) {
+  String? nodesStr;
   if (nodes != null && nodes.isNotEmpty) {
-    nodesStr = nodes.fold('', (previousValue, node) {
-      return '${previousValue}${node.toContactEncodingString()}';
+    nodesStr = nodes.fold<String>('', (previousValue, node) {
+      return '$previousValue${node.toContactEncodingString()}';
     });
   }
-  var values;
+  List<String>? values;
   if (peers != null && peers.isNotEmpty) {
-    values = <String>[];
-    peers.forEach((peer) {
+    values = [];
+    for (var peer in peers) {
       values.add(peer.toContactEncodingString());
-    });
+    }
   }
   var r = <String, dynamic>{ID_KEY: nodeId, 'token': token};
   if (nodesStr != null) {

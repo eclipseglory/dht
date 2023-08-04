@@ -67,14 +67,15 @@ abstract class KRPC {
   bool offPong(KRPCResponseHandler handler);
 
   /// send `ping` response to remote
-  void pong(String tid, InternetAddress address, int port);
+  void pong(String tid, InternetAddress address, int port, [String? nodeId]);
 
   bool onPing(KRPCQueryHandler handler);
 
   bool offPing(KRPCQueryHandler handler);
 
   /// send `find_node` query to remote
-  void findNode(String targetId, InternetAddress address, int port);
+  void findNode(String targetId, InternetAddress address, int port,
+      [String? qNodeId]);
 
   bool onFindNodeResponse(KRPCResponseHandler handler);
 
@@ -82,7 +83,8 @@ abstract class KRPC {
 
   /// send `find_node` response to remote
   void responseFindNode(
-      String tid, List<Node> nodes, InternetAddress address, int port);
+      String tid, List<Node> nodes, InternetAddress address, int port,
+      [String? nodeId]);
 
   bool onFindNodeRequest(KRPCQueryHandler handler);
 
@@ -98,7 +100,7 @@ abstract class KRPC {
   /// send `get_peers` response to remote
   void responseGetPeers(String tid, String infoHash, InternetAddress address,
       int port, String token,
-      {Iterable<Node> nodes, Iterable<CompactAddress> peers});
+      {Iterable<Node> nodes, Iterable<CompactAddress> peers, String? nodeId});
 
   bool onGetPeersReponse(KRPCResponseHandler handler);
 
@@ -290,26 +292,29 @@ class _KRPC implements KRPC {
   }
 
   @override
-  void pong(String tid, InternetAddress address, int port) {
+  void pong(String tid, InternetAddress address, int port, [String? nodeId]) {
     if (isStopped || _socket == null) return;
-    var message = pongMessage(tid, _nodeId.toString());
+    var message = pongMessage(tid, nodeId ?? _nodeId.toString());
     _socket?.send(message, address, port);
   }
 
   @override
   void responseFindNode(
-      String tid, List<Node> nodes, InternetAddress address, int port) {
+      String tid, List<Node> nodes, InternetAddress address, int port,
+      [String? nodeId]) {
     if (isStopped || _socket == null) return;
-    var message = findNodeResponse(tid, _nodeId.toString(), nodes);
+    var message = findNodeResponse(tid, nodeId ?? _nodeId.toString(), nodes);
     _socket?.send(message, address, port);
   }
 
   @override
   void responseGetPeers(String tid, String infoHash, InternetAddress address,
       int port, String token,
-      {Iterable<Node>? nodes, Iterable<CompactAddress>? peers}) {
+      {Iterable<Node>? nodes,
+      Iterable<CompactAddress>? peers,
+      String? nodeId}) {
     if (isStopped || _socket == null) return;
-    var message = getPeersResponse(tid, _nodeId.toString(), token,
+    var message = getPeersResponse(tid, nodeId ?? _nodeId.toString(), token,
         nodes: nodes, peers: peers);
     _socket?.send(message, address, port);
   }
@@ -323,10 +328,11 @@ class _KRPC implements KRPC {
   }
 
   @override
-  void findNode(String targetId, InternetAddress address, int port) {
+  void findNode(String targetId, InternetAddress address, int port,
+      [String? qNodeId]) {
     if (isStopped || _socket == null) return;
     var tid = _recordTransaction(EVENT.FIND_NODE);
-    var message = findNodeMessage(tid, _nodeId.toString(), targetId);
+    var message = findNodeMessage(tid, qNodeId ?? _nodeId.toString(), targetId);
     _requestQuery(tid, message, address, port);
   }
 

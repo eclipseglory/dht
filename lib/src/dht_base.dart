@@ -4,7 +4,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
-
+import 'package:meta/meta.dart';
 import 'package:dartorrent_common/dartorrent_common.dart';
 
 import 'kademlia/id.dart';
@@ -21,9 +21,13 @@ typedef NewPeerHandler = void Function(CompactAddress address, String hashinfo);
 class DHT {
   KRPC? _krpc;
 
+  KRPC? get krpc => _krpc;
+
   Node? _root;
 
-  final Map<String, Queue<CompactAddress>> _resourceTable =
+  Node? get root => _root;
+  @protected
+  final Map<String, Queue<CompactAddress>> resourceTable =
       <String, Queue<CompactAddress>>{};
 
   final Map<String, int> _announceTable = <String, int>{};
@@ -74,12 +78,12 @@ class DHT {
     _krpc?.onError(_fireError);
 
     _krpc?.onPong(_processPong);
-    _krpc?.onPing(_processPing);
+    _krpc?.onPing(processPing);
 
-    _krpc?.onFindNodeRequest(_processFindNodeRequest);
+    _krpc?.onFindNodeRequest(processFindNodeRequest);
     _krpc?.onFindNodeResponse(_processFindNodeResponse);
 
-    _krpc?.onGetPeersRequest(_processGetPeersRequest);
+    _krpc?.onGetPeersRequest(processGetPeersRequest);
     _krpc?.onGetPeersReponse(_processGetPeersResponse);
 
     _krpc?.onAnnouncePeerRequest(_processAnnouncePeerRequest);
@@ -102,7 +106,7 @@ class DHT {
   ///
   /// User can invoke `bootstrap` after stop , everything will be fresh.
   Future stop() async {
-    _resourceTable.clear();
+    resourceTable.clear();
     _announceTable.clear();
     _newPeerHandler.clear();
     _errorHandler.clear();
@@ -168,7 +172,8 @@ class DHT {
     }
   }
 
-  void _processPing(List<int> idBytes, String tid, InternetAddress address,
+  @protected
+  void processPing(List<int> idBytes, String tid, InternetAddress address,
       int port, dynamic data) {
     var id = ID.createID(idBytes, 0, 20);
     log('Got ping from $address:$port id:${Uint8List.fromList(id.ids).toHexString()}',
@@ -197,8 +202,8 @@ class DHT {
       return;
     }
     var infoHashStr = String.fromCharCodes(infoHash);
-    _resourceTable[infoHashStr] ??= Queue<CompactAddress>();
-    var peers = _resourceTable[infoHashStr];
+    resourceTable[infoHashStr] ??= Queue<CompactAddress>();
+    var peers = resourceTable[infoHashStr];
     CompactAddress peer;
     var impliedPort = data['implied_port'];
     if (impliedPort != null && impliedPort != 0) {
@@ -279,7 +284,8 @@ class DHT {
     _xorToken[3] = temp.getValueAt(3);
   }
 
-  List<int> _createToken(InternetAddress address) {
+  @protected
+  List<int> createToken(InternetAddress address) {
     var a = address.rawAddress[0] ^ _xorToken[3];
     var b = address.rawAddress[1] ^ _xorToken[2];
     var c = address.rawAddress[2] ^ _xorToken[1];
@@ -287,7 +293,8 @@ class DHT {
     return [a, b, c, d];
   }
 
-  void _processGetPeersRequest(List<int> idBytes, String tid,
+  @protected
+  void processGetPeersRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
     log('Got get peers request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
@@ -304,11 +311,11 @@ class DHT {
       _krpc?.error(tid, address, port, 203, 'invalid arguments');
       return;
     }
-    var nodes = _findClosestNode(infohash);
+    var nodes = findClosestNode(infohash);
     var infoHashStr = String.fromCharCodes(infohash);
-    var peers = _resourceTable[infoHashStr];
+    var peers = resourceTable[infoHashStr];
     // TODO Distinguish between IPv6 and IPv4 !!!!!!!
-    var token = String.fromCharCodes(_createToken(address));
+    var token = String.fromCharCodes(createToken(address));
     // Return peers
     if (peers != null) {
       _krpc?.responseGetPeers(tid, infoHashStr, address, port, token,
@@ -332,12 +339,12 @@ class DHT {
     }
     if (token == null) {
       log('Response Error',
-          error: 'Dont include Token', name: runtimeType.toString());
+          error: 'Doesn\'t include Token', name: runtimeType.toString());
     }
     var infoHash = data['__additional'];
     if (infoHash == null) {
       log('Inner Error',
-          error: 'InfoHash didn\'t record', name: runtimeType.toString());
+          error: 'InfoHash don\'t match', name: runtimeType.toString());
     }
     // If not announced, then announce once
     if (infoHash != null &&
@@ -381,7 +388,8 @@ class DHT {
     }
   }
 
-  void _processFindNodeRequest(List<int> idBytes, String tid,
+  @protected
+  void processFindNodeRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
     log('Got find node request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
@@ -398,7 +406,7 @@ class DHT {
       _krpc?.error(tid, address, port, 203, 'invalid arguments');
       return;
     }
-    var nodes = _findClosestNode(target);
+    var nodes = findClosestNode(target);
     _krpc?.responseFindNode(tid, nodes, address, port);
   }
 
@@ -407,7 +415,7 @@ class DHT {
   void _processFindNodeResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
     var qid = ID.createID(idBytes, 0, 20);
-    log('Got find node response fromm $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+    log('Got find node response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
         name: runtimeType.toString());
     if (qid == _root?.id) return;
     var node = _root?.findNode(qid);
@@ -446,7 +454,8 @@ class DHT {
     }
   }
 
-  List<Node> _findClosestNode(List<int> idBytes) {
+  @protected
+  List<Node> findClosestNode(List<int> idBytes) {
     var id = ID.createID(idBytes, 0, 20);
     var node = _root?.findNode(id);
     List<Node>? nodes;

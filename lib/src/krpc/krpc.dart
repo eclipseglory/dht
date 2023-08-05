@@ -32,7 +32,7 @@ abstract class KRPC {
   /// Start KRPC service.
   ///
   /// Actually it start to UDP listening and init some parameters.
-  Future start();
+  Future<int?> start([int? port]);
 
   /// Stop KRPC service.
   ///
@@ -408,8 +408,9 @@ class _KRPC implements KRPC {
   }
 
   @override
-  Future<int?> start() async {
-    _socket ??= await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+  Future<int?> start([int? port]) async {
+    _socket ??=
+        await RawDatagramSocket.bind(InternetAddress.anyIPv4, port ?? 0);
     _socket?.listen((event) {
       if (event == RawSocketEvent.read) {
         var datagram = _socket?.receive();

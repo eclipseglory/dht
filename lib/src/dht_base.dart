@@ -62,10 +62,12 @@ class DHT {
   /// [udpTimeout] : Each query timeout time, default is 15 seconds
   /// [maxQeury] : the max number of the queries processing (`queries_number`). if `queries_number` reach this number , DHT won't
   /// send any request to remote until the old request was reponse or timeout to reduce the `queries_number`.
-  Future<int?> bootstrap(
-      {int cleanNodeTime = 15 * 60,
-      int udpTimeout = TIME_OUT_TIME,
-      int maxQeury = 24}) async {
+  Future<int?> bootstrap({
+    int cleanNodeTime = 15 * 60,
+    int udpTimeout = TIME_OUT_TIME,
+    int maxQeury = 24,
+    int port = 0,
+  }) async {
     _cleanNodeTime = cleanNodeTime;
     _generateXorToken();
     _tokenGenerateTimer?.cancel();
@@ -74,7 +76,7 @@ class DHT {
     });
     var id = ID.randomID();
     _krpc ??= KRPC.newService(id, timeout: udpTimeout, maxQuery: maxQeury);
-    _port = await _krpc?.start();
+    _port = await _krpc?.start(port);
     _krpc?.onError(_fireError);
 
     _krpc?.onPong(_processPong);

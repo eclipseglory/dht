@@ -256,7 +256,7 @@ void main() {
       id.add(l);
       var target = Node(ID.createID(id), null);
       var re = root.findClosestNodes(target.id);
-      assert(re?.length == 8);
+      assert(re.length == 8);
     });
   });
 

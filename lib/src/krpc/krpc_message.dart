@@ -42,7 +42,7 @@ const FIND_NODE = 'find_node';
 const GET_PEERS = 'get_peers';
 const ANNOUNCE_PEER = 'announce_peer';
 
-const QUERY_KEYS = [PING, FIND_NODE, GET_PEERS];
+const QUERY_KEYS = [PING, FIND_NODE, GET_PEERS, ANNOUNCE_PEER];
 
 /// [transactionId] should be encoded as a short string of binary numbers, typically
 ///  2 characters are enough as they cover 2^16 outstanding queries.

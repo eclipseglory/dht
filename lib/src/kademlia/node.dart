@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dartorrent_common/dartorrent_common.dart';
 
@@ -42,6 +43,10 @@ class Node {
   final Map<String, String> token = <String, String>{};
 
   final Map<String, bool> announced = <String, bool>{};
+
+  List<Node> get nodes {
+    return buckets.expand((bucket) => bucket.nodes).toList();
+  }
 
   Node(this.id, this._compactAddress,
       [this._cleanupTime = 15 * 60, this.k = 8]) {
@@ -107,8 +112,8 @@ class Node {
     return _buckets![index];
   }
 
-  List<Node>? findClosestNodes(ID id) {
-    if (_buckets == null || _buckets!.isEmpty) return null;
+  List<Node> findClosestNodes(ID id) {
+    if (_buckets == null || _buckets!.isEmpty) return <Node>[];
     var index = _getBucketIndex(id);
     if (index == -1) return <Node>[this];
     var bucket = _buckets![index];
@@ -174,7 +179,7 @@ class Node {
 
   @override
   String toString() {
-    return 'Node[id:${id.toString()},Peer:${_compactAddress?.toString()}]';
+    return '${_compactAddress?.toString()} ${Uint8List.fromList(id.ids).toHexString()}';
   }
 
   bool get isDisposed => _disposed;

@@ -100,7 +100,7 @@ abstract class KRPC {
   /// send `get_peers` response to remote
   void responseGetPeers(String tid, String infoHash, InternetAddress address,
       int port, String token,
-      {Iterable<Node> nodes, Iterable<CompactAddress> peers, String? nodeId});
+      {Iterable<Node>? nodes, Iterable<CompactAddress>? peers, String? nodeId});
 
   bool onGetPeersReponse(KRPCResponseHandler handler);
 
@@ -313,6 +313,8 @@ class _KRPC implements KRPC {
       {Iterable<Node>? nodes,
       Iterable<CompactAddress>? peers,
       String? nodeId}) {
+    log('Sending getPeersResponse to ${address.address} ',
+        name: runtimeType.toString());
     if (isStopped || _socket == null) return;
     var message = getPeersResponse(tid, nodeId ?? _nodeId.toString(), token,
         nodes: nodes, peers: peers);
@@ -444,6 +446,8 @@ class _KRPC implements KRPC {
     if (_pendingQuery >= _maxQuery &&
         _querySub != null &&
         !_querySub!.isPaused) {
+      log('max query count $_maxQuery reached, pausing ',
+          name: runtimeType.toString());
       _querySub?.pause();
     }
   }
@@ -468,7 +472,7 @@ class _KRPC implements KRPC {
     }
     String? tid;
     try {
-      tid = String.fromCharCodes(data[TRANSACTION_KEY], 0, 2);
+      tid = String.fromCharCodes(data[TRANSACTION_KEY], 0);
     } catch (e) {
       log('"Error parsing Tid', error: e, name: runtimeType.toString());
     } //Error parsing Tid.
@@ -479,7 +483,7 @@ class _KRPC implements KRPC {
       return;
     }
     var additionalValues = _transactionsValues[tid];
-    var event = _cleanTransaction(tid);
+
     String? method;
     try {
       method = String.fromCharCodes(data[METHOD_KEY], 0, 1);
@@ -490,6 +494,10 @@ class _KRPC implements KRPC {
       var idBytes = data[RESPONSE_KEY][ID_KEY];
       if (idBytes == null) {
         _fireError(Protocal_Error, tid, 'Incorrect Node ID', address, port);
+        return;
+      }
+      var event = _cleanTransaction(tid);
+      if (event == null) {
         return;
       }
       var r = data[RESPONSE_KEY];
@@ -527,7 +535,8 @@ class _KRPC implements KRPC {
       if (queryKey == ANNOUNCE_PEER) {
         event = EVENT.ANNOUNCE_PEER;
       }
-      log('Received a Query request: $event, from $address : $port');
+      log('Received a Query request: $event, from $address : $port',
+          name: runtimeType.toString());
       var arguments = data[ARGUMENTS_KEY];
       if (event != null) {
         _fireQuery(event, idBytes, tid, address, port, arguments);
@@ -574,7 +583,7 @@ class _KRPC implements KRPC {
     }
   }
 
-  void _fireResponse(EVENT? event, List<int> nodeIdBytes,
+  void _fireResponse(EVENT event, List<int> nodeIdBytes,
       InternetAddress address, int port, dynamic response) {
     var handlers = _responseHandlers[event];
     handlers?.forEach((handle) {

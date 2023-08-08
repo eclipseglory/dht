@@ -319,10 +319,8 @@ class DHT {
     // TODO Distinguish between IPv6 and IPv4 !!!!!!!
     var token = String.fromCharCodes(createToken(address));
     // Return peers
-    if (peers != null) {
-      _krpc?.responseGetPeers(tid, infoHashStr, address, port, token,
-          nodes: nodes, peers: peers);
-    }
+    _krpc?.responseGetPeers(tid, infoHashStr, address, port, token,
+        nodes: nodes, peers: peers);
   }
 
   void _processGetPeersResponse(
@@ -460,17 +458,17 @@ class DHT {
   List<Node> findClosestNode(List<int> idBytes) {
     var id = ID.createID(idBytes, 0, 20);
     var node = _root?.findNode(id);
-    List<Node>? nodes;
+    List<Node> nodes = [];
     if (node == null) {
-      nodes = _root?.findClosestNodes(id);
+      nodes = _root?.findClosestNodes(id) ?? [];
     } else {
       nodes = <Node>[node];
     }
-    return nodes!;
+    return nodes;
   }
 
   void _requestGetPeers(Node node, String infoHash) {
-    log('requesting peers for infohash ${Uint8List.fromList(infoHash.runes.toList()).toHexString()} from node ${Uint8List.fromList(node.id.ids).toHexString()}',
+    log('requesting peers for infohash ${Uint8List.fromList(infoHash.runes.toList()).toHexString()} from node ${node.address?.address}:${node.port} ${Uint8List.fromList(node.id.ids).toHexString()}',
         name: runtimeType.toString());
     if (node.announced[infoHash] != null && node.announced[infoHash]!) {
       return;

@@ -477,7 +477,7 @@ class _KRPC implements KRPC {
       log('"Error parsing Tid', error: e, name: runtimeType.toString());
     } //Error parsing Tid.
     // print('Request response for $tid, currently pending requests: $_pendingQuery.');
-    if (tid == null || tid.length != 2) {
+    if (tid == null) {
       _fireError(
           Protocal_Error, null, 'Incorret Transaction ID', address, port);
       return;

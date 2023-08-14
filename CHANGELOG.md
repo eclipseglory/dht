@@ -15,3 +15,7 @@
 
 - migrate to nullsafety
 - some linting and code style enhancments
+
+## 0.0.9
+
+- pub.dev fixes

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'distance.dart';
 
+// ignore: constant_identifier_names
 const BASE_NUM = 128;
 
 /// A ID with any length bytes array

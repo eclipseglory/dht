@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:typed_data';
 
 import 'package:b_encode_decode/b_encode_decode.dart' as bencoder;

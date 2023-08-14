@@ -1,4 +1,4 @@
-library dht_dart;
+library bittorrent_dht;
 
 export 'src/dht_base.dart';
 export 'src/krpc/krpc.dart';

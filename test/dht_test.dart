@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:bencode_dart/bencode_dart.dart';
-import 'package:dartorrent_common/dartorrent_common.dart';
-import 'package:dht_dart/src/kademlia/id.dart';
-import 'package:dht_dart/src/kademlia/node.dart';
-import 'package:dht_dart/src/krpc/krpc_message.dart';
-import 'package:dht_dart/src/kademlia/bucket.dart';
-import 'package:dht_dart/src/kademlia/tree_node.dart';
+import 'package:b_encode_decode/b_encode_decode.dart';
+import 'package:dtorrent_common/dtorrent_common.dart';
+import 'package:bittorrent_dht/src/kademlia/id.dart';
+import 'package:bittorrent_dht/src/kademlia/node.dart';
+import 'package:bittorrent_dht/src/krpc/krpc_message.dart';
+import 'package:bittorrent_dht/src/kademlia/bucket.dart';
+import 'package:bittorrent_dht/src/kademlia/tree_node.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -11,7 +11,7 @@ Support:
 A simple usage example:
 
 ```dart
-import 'package:dht/dht.dart';
+import 'package:bittorrent_dht/bittorrent_dht.dart';
 
 main() {
   var dht = DHT();

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:bencode_dart/bencode_dart.dart' as bencoder;
-import 'package:dartorrent_common/dartorrent_common.dart';
+import 'package:b_encode_decode/b_encode_decode.dart' as bencoder;
+import 'package:dtorrent_common/dtorrent_common.dart';
 
 import '../kademlia/node.dart';
 

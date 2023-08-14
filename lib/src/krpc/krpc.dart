@@ -3,8 +3,8 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:bencode_dart/bencode_dart.dart';
-import 'package:dartorrent_common/dartorrent_common.dart';
+import 'package:b_encode_decode/b_encode_decode.dart';
+import 'package:dtorrent_common/dtorrent_common.dart';
 
 import 'krpc_message.dart';
 import '../kademlia/id.dart';

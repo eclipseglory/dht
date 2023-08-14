@@ -1,8 +1,8 @@
 import 'dart:developer' as dev;
-import 'package:dartorrent_common/dartorrent_common.dart';
+import 'package:dtorrent_common/dtorrent_common.dart';
 
-import 'package:dht_dart/dht_dart.dart';
-import 'package:torrent_model/torrent_model.dart';
+import 'package:bittorrent_dht/bittorrent_dht.dart';
+import 'package:dtorrent_parser/dtorrent_parser.dart';
 
 void main() async {
   var torrent = await Torrent.parse('example/test7.torrent');

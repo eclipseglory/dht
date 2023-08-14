@@ -5,7 +5,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:meta/meta.dart';
-import 'package:dartorrent_common/dartorrent_common.dart';
+import 'package:dtorrent_common/dtorrent_common.dart';
 
 import 'kademlia/id.dart';
 import 'kademlia/node.dart';

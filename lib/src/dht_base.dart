@@ -165,27 +165,35 @@ class DHT {
 
   void _processPong(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
-    var id = ID.createID(idBytes, 0, 20);
-    if (_canAdd(id)) {
-      _tryToGetNode(address, port);
-    } else {
-      var node = _root?.findNode(id);
-      node?.resetCleanupTimer();
+    try {
+      var id = ID.createID(idBytes, 0, 20);
+      if (_canAdd(id)) {
+        _tryToGetNode(address, port);
+      } else {
+        var node = _root?.findNode(id);
+        node?.resetCleanupTimer();
+      }
+    } catch (e) {
+      // do nothing
     }
   }
 
   @protected
   void processPing(List<int> idBytes, String tid, InternetAddress address,
       int port, dynamic data) {
-    var id = ID.createID(idBytes, 0, 20);
-    log('Got ping from $address:$port id:${Uint8List.fromList(id.ids).toHexString()}',
-        name: runtimeType.toString());
     Timer.run(() => _krpc?.pong(tid, address, port));
-    if (_canAdd(id)) {
-      _tryToGetNode(address, port);
-    } else {
-      var node = _root?.findNode(id);
-      node?.resetCleanupTimer();
+    try {
+      var id = ID.createID(idBytes, 0, 20);
+      log('Got ping from $address:$port id:${Uint8List.fromList(id.ids).toHexString()}',
+          name: runtimeType.toString());
+      if (_canAdd(id)) {
+        _tryToGetNode(address, port);
+      } else {
+        var node = _root?.findNode(id);
+        node?.resetCleanupTimer();
+      }
+    } catch (e) {
+      // do nothing
     }
   }
 
@@ -260,14 +268,18 @@ class DHT {
     for (var i = j + 1; i < 20; i++) {
       newId[i] = r.nextInt(256);
     }
-    var nid = ID.createID(newId);
-    // print('bucket $index Clear all and query the corresponding node ${nid.toString()}');
-    _root?.forEach((node) {
-      node.queried = false;
-      if (node.address != null && node.port != null) {
-        _tryToGetNode(node.address!, node.port!, nid.toString());
-      }
-    });
+    try {
+      var nid = ID.createID(newId);
+      // print('bucket $index Clear all and query the corresponding node ${nid.toString()}');
+      _root?.forEach((node) {
+        node.queried = false;
+        if (node.address != null && node.port != null) {
+          _tryToGetNode(node.address!, node.port!, nid.toString());
+        }
+      });
+    } catch (e) {
+      // do nothing
+    }
   }
 
   bool _validateToken(List<int> token, InternetAddress address) {
@@ -298,15 +310,19 @@ class DHT {
   @protected
   void processGetPeersRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
-    var qid = ID.createID(idBytes, 0, 20);
-    log('Got get peers request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
-        name: runtimeType.toString());
-    if (_canAdd(qid)) {
-      // Don't miss any opportunity
-      _tryToGetNode(address, port);
-    } else {
-      var node = _root?.findNode(qid);
-      node?.resetCleanupTimer();
+    try {
+      var qid = ID.createID(idBytes, 0, 20);
+      log('Got get peers request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+          name: runtimeType.toString());
+      if (_canAdd(qid)) {
+        // Don't miss any opportunity
+        _tryToGetNode(address, port);
+      } else {
+        var node = _root?.findNode(qid);
+        node?.resetCleanupTimer();
+      }
+    } catch (e) {
+      // do nothing
     }
     var infohash = data['info_hash'] as List<int>;
     if (infohash.length != 20) {
@@ -325,81 +341,89 @@ class DHT {
 
   void _processGetPeersResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
-    var qid = ID.createID(idBytes, 0, 20);
-    log(
-      'Got get peers response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
-      name: runtimeType.toString(),
-    );
-    var node = _root?.findNode(qid);
-    if (node == null) return;
-    node.resetCleanupTimer();
-    String? token;
-    if (data[TOKEN_KEY] != null) {
-      token = String.fromCharCodes(data['token']);
-    }
-    if (token == null) {
-      log('Response Error',
-          error: 'Doesn\'t include Token', name: runtimeType.toString());
-    }
-    var infoHash = data['__additional'];
-    if (infoHash == null) {
-      log('Inner Error',
-          error: 'InfoHash don\'t match', name: runtimeType.toString());
-    }
-    // If not announced, then announce once
-    if (infoHash != null &&
-        (node.announced[infoHash] == null || !node.announced[infoHash]!) &&
-        token != null) {
-      node.token[infoHash] = token;
-      var peerPort = _announceTable[infoHash];
-      if (peerPort != null) {
-        node.announced[infoHash] = true;
-        // print('Announce Peer:Port $peerPort ,hash:$infoHash');
-        _krpc?.announcePeer(infoHash, peerPort, token, address, port);
+    try {
+      var qid = ID.createID(idBytes, 0, 20);
+      log(
+        'Got get peers response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+        name: runtimeType.toString(),
+      );
+      var node = _root?.findNode(qid);
+      if (node == null) return;
+      node.resetCleanupTimer();
+      String? token;
+      if (data[TOKEN_KEY] != null) {
+        token = String.fromCharCodes(data['token']);
       }
-    }
-    if (data[NODES_KEY] != null) {
-      _processFindNodeResponse(idBytes, address, port, data);
-    }
-    if (data[VALUES_KEY] != null) {
-      var peers = data[VALUES_KEY];
-      peers.forEach((peer) {
-        try {
-          if (peer is List<int>) {
-            if (peer.length <= 6) {
-              var p = CompactAddress.parseIPv4Address(peer);
-              if (p != null) {
-                _fireFoundNewPeer(p, infoHash);
-              }
-            }
-            if (peer.length > 6 && peer.length <= 18) {
-              var p = CompactAddress.parseIPv6Address(peer);
-              if (p != null) {
-                _fireFoundNewPeer(p, infoHash);
-              }
-            }
-          }
-        } catch (e) {
-          // do nothing
-          log('Parse peer address error:',
-              error: e, name: runtimeType.toString());
+      if (token == null) {
+        log('Response Error',
+            error: 'Doesn\'t include Token', name: runtimeType.toString());
+      }
+      var infoHash = data['__additional'];
+      if (infoHash == null) {
+        log('Inner Error',
+            error: 'InfoHash don\'t match', name: runtimeType.toString());
+      }
+      // If not announced, then announce once
+      if (infoHash != null &&
+          (node.announced[infoHash] == null || !node.announced[infoHash]!) &&
+          token != null) {
+        node.token[infoHash] = token;
+        var peerPort = _announceTable[infoHash];
+        if (peerPort != null) {
+          node.announced[infoHash] = true;
+          // print('Announce Peer:Port $peerPort ,hash:$infoHash');
+          _krpc?.announcePeer(infoHash, peerPort, token, address, port);
         }
-      });
+      }
+      if (data[NODES_KEY] != null) {
+        _processFindNodeResponse(idBytes, address, port, data);
+      }
+      if (data[VALUES_KEY] != null) {
+        var peers = data[VALUES_KEY];
+        peers.forEach((peer) {
+          try {
+            if (peer is List<int>) {
+              if (peer.length <= 6) {
+                var p = CompactAddress.parseIPv4Address(peer);
+                if (p != null) {
+                  _fireFoundNewPeer(p, infoHash);
+                }
+              }
+              if (peer.length > 6 && peer.length <= 18) {
+                var p = CompactAddress.parseIPv6Address(peer);
+                if (p != null) {
+                  _fireFoundNewPeer(p, infoHash);
+                }
+              }
+            }
+          } catch (e) {
+            // do nothing
+            log('Parse peer address error:',
+                error: e, name: runtimeType.toString());
+          }
+        });
+      }
+    } catch (e) {
+      //
     }
   }
 
   @protected
   void processFindNodeRequest(List<int> idBytes, String tid,
       InternetAddress address, int port, dynamic data) {
-    var qid = ID.createID(idBytes, 0, 20);
-    log('Got find node request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
-        name: runtimeType.toString());
-    if (_canAdd(qid)) {
-      // Don't miss any opportunity
-      _tryToGetNode(address, port);
-    } else {
-      var node = _root?.findNode(qid);
-      node?.resetCleanupTimer();
+    try {
+      var qid = ID.createID(idBytes, 0, 20);
+      log('Got find node request from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+          name: runtimeType.toString());
+      if (_canAdd(qid)) {
+        // Don't miss any opportunity
+        _tryToGetNode(address, port);
+      } else {
+        var node = _root?.findNode(qid);
+        node?.resetCleanupTimer();
+      }
+    } catch (e) {
+      //
     }
     var target = data[TARGET_KEY];
     if (target == null || target.length != 20) {
@@ -407,33 +431,37 @@ class DHT {
       return;
     }
     var nodes = findClosestNode(target);
-    _krpc?.responseFindNode(tid, nodes, address, port);
+    if (nodes != null) _krpc?.responseFindNode(tid, nodes, address, port);
   }
 
   /// `response: {"id" : "<queried nodes id>", "nodes" : "<compact node info>"}`
   /// Each node is 26 bytes, with the first 20 bytes being the ID, and the remaining 6 bytes being the IP and port.
   void _processFindNodeResponse(
       List<int> idBytes, InternetAddress address, int port, dynamic data) {
-    var qid = ID.createID(idBytes, 0, 20);
-    log('Got find node response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
-        name: runtimeType.toString());
-    if (qid == _root?.id) return;
-    var node = _root?.findNode(qid);
-    node?.resetCleanupTimer();
-    if (node != null && node.queried) {
-      // If a node is already present in the local network and has been
-      // 'findnode'ed before, it will no longer be processed for the obtained nodes.
-      return;
-    }
-    node ??= Node(qid, CompactAddress(address, port), _cleanNodeTime);
-    node.queried = true;
-    if (_root != null && _root!.add(node)) {
-      if (_announceTable.keys.isNotEmpty) {
-        // Request peers from the newly added node
-        for (var infoHash in _announceTable.keys) {
-          _requestGetPeers(node, infoHash);
+    try {
+      var qid = ID.createID(idBytes, 0, 20);
+      log('Got find node response from $address:$port id:${Uint8List.fromList(qid.ids).toHexString()}',
+          name: runtimeType.toString());
+      if (qid == _root?.id) return;
+      var node = _root?.findNode(qid);
+      node?.resetCleanupTimer();
+      if (node != null && node.queried) {
+        // If a node is already present in the local network and has been
+        // 'findnode'ed before, it will no longer be processed for the obtained nodes.
+        return;
+      }
+      node ??= Node(qid, CompactAddress(address, port), _cleanNodeTime);
+      node.queried = true;
+      if (_root != null && _root!.add(node)) {
+        if (_announceTable.keys.isNotEmpty) {
+          // Request peers from the newly added node
+          for (var infoHash in _announceTable.keys) {
+            _requestGetPeers(node, infoHash);
+          }
         }
       }
+    } catch (e) {
+      //
     }
 
     if (data[NODES_KEY] == null) return;
@@ -455,16 +483,20 @@ class DHT {
   }
 
   @protected
-  List<Node> findClosestNode(List<int> idBytes) {
-    var id = ID.createID(idBytes, 0, 20);
-    var node = _root?.findNode(id);
-    List<Node> nodes = [];
-    if (node == null) {
-      nodes = _root?.findClosestNodes(id) ?? [];
-    } else {
-      nodes = <Node>[node];
+  List<Node>? findClosestNode(List<int> idBytes) {
+    try {
+      var id = ID.createID(idBytes, 0, 20);
+      var node = _root?.findNode(id);
+      List<Node> nodes = [];
+      if (node == null) {
+        nodes = _root?.findClosestNodes(id) ?? [];
+      } else {
+        nodes = <Node>[node];
+      }
+      return nodes;
+    } catch (e) {
+      return null;
     }
-    return nodes;
   }
 
   void _requestGetPeers(Node node, String infoHash) {
